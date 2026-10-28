@@ -1,17 +1,33 @@
-import { createAudioPlayer, type AudioPlayer } from "expo-audio";
+import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from "expo-audio";
 import * as Haptics from "expo-haptics";
 import { File, Paths } from "expo-file-system";
-import { cuePcm, pcmToWavBase64, type Cue } from "./voice/pcm";
+import { cuePcm, pcmToWavBase64, SAMPLE_RATE, type Cue } from "./voice/pcm";
 
 // UI sounds outside a call go through expo-audio (during a call they're played
 // by the voice engine instead — see VoiceProvider.playCue).
 
-let chime: AudioPlayer | null = null;
+const cuePlayers = new Map<Cue, AudioPlayer>();
+let keepAlive: AudioPlayer | null = null;
 
-function cueFile(cue: Cue): string {
-  const file = new File(Paths.cache, `cue-${cue}.wav`);
+/**
+ * Audio session for everything outside a call: speech and chimes play with the
+ * silent switch on and keep playing in the background, mixed with the user's
+ * own music. The voice engine replaces it during a call, so it's re-applied
+ * when a call ends.
+ */
+export function configureAudioSession() {
+  void setAudioModeAsync({
+    playsInSilentMode: true,
+    shouldPlayInBackground: true,
+    interruptionMode: "mixWithOthers",
+    allowsRecording: false,
+  }).catch(() => {});
+}
+
+function wavFile(name: string, pcm: () => Uint8Array): string {
+  const file = new File(Paths.cache, `${name}.wav`);
   if (!file.exists) {
-    const bin = atob(pcmToWavBase64(cuePcm(cue)));
+    const bin = atob(pcmToWavBase64(pcm()));
     const bytes = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
     file.create({ overwrite: true });
@@ -20,13 +36,46 @@ function cueFile(cue: Cue): string {
   return file.uri;
 }
 
+/** Play a cue through expo-audio. Returns how long it lasts, in ms. */
+export function playCueSound(cue: Cue): number {
+  try {
+    let player = cuePlayers.get(cue);
+    if (!player) {
+      player = createAudioPlayer({ uri: wavFile(`cue-${cue}`, () => cuePcm(cue)) });
+      cuePlayers.set(cue, player);
+    }
+    const p = player;
+    void p.seekTo(0).then(() => p.play()).catch(() => {});
+  } catch {
+    /* sound is decoration — never let it break the caller */
+  }
+  return (cuePcm(cue).length / (SAMPLE_RATE * 2)) * 1000;
+}
+
 /** Rising two-note chime played when a task is marked done */
 export function playTaskCompleteSound() {
   void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+  playCueSound("taskComplete");
+}
+
+/**
+ * Loops silence so iOS keeps the app running in the background. Used while a
+ * focus session runs: without remote push the app itself has to be awake to
+ * hear the phase change, announce it and update the Live Activity.
+ */
+export function setBackgroundKeepAlive(on: boolean) {
   try {
-    if (!chime) chime = createAudioPlayer({ uri: cueFile("taskComplete") });
-    void chime.seekTo(0).then(() => chime?.play()).catch(() => {});
+    if (!on) {
+      keepAlive?.pause();
+      return;
+    }
+    if (!keepAlive) {
+      keepAlive = createAudioPlayer({ uri: wavFile("silence", () => new Uint8Array(SAMPLE_RATE * 2)) });
+      keepAlive.loop = true;
+    }
+    configureAudioSession();
+    keepAlive.play();
   } catch {
-    /* sound is decoration — never let it break the tap */
+    /* worst case the app suspends like before */
   }
 }

@@ -73,7 +73,7 @@ let msgId = 0;
 export function ConversationProvider({ children }: { children: ReactNode }) {
   const { status, send, addListener, reconnect } = useWs();
   const voice = useVoice();
-  const { speak, playMusic, stopMusic, startSession, endSession, notifyActivity, playThinkingCue } = voice;
+  const { speak, announce, playMusic, stopMusic, startSession, endSession, notifyActivity, playThinkingCue } = voice;
   const [messages, setMessages] = useState<Message[]>([]);
   const [processing, setProcessing] = useState(false);
   const [helpHint, setHelpHint] = useState(0);
@@ -159,10 +159,13 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
       if (msg.type === "pomodoro_sync") return; // silent resync on reconnect
       const say = speech ?? fallbackSpeech(msg);
       if (!say) return;
-      pushMessage("assistant", say, msg.type === "pomodoro_transition" || msg.type === "pomodoro_complete" ? "pomodoro_started" : msg.type);
-      speak(say);
+      const focusChange = msg.type === "pomodoro_transition" || msg.type === "pomodoro_complete";
+      pushMessage("assistant", say, focusChange ? "pomodoro_started" : msg.type);
+      // Focus phase changes get a chime first, so they don't start mid-thought
+      if (focusChange) announce(say);
+      else speak(say);
     });
-  }, [addListener, pushMessage, speak, playMusic, stopMusic, settleReply]);
+  }, [addListener, pushMessage, speak, announce, playMusic, stopMusic, settleReply]);
 
   const sendUtterance = useCallback((text: string, meta?: TranscriptMeta, fromVoice = false): boolean => {
     const trimmed = text.trim();

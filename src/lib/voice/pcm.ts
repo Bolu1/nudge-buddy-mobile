@@ -63,7 +63,7 @@ function cached(key: string, make: () => Uint8Array) {
   return v;
 }
 
-export type Cue = "mute" | "unmute" | "end" | "thinking" | "taskComplete";
+export type Cue = "mute" | "unmute" | "end" | "thinking" | "taskComplete" | "phaseChime";
 
 export function cuePcm(cue: Cue): Uint8Array {
   return cached(cue, () => {
@@ -87,6 +87,13 @@ export function cuePcm(cue: Cue): Uint8Array {
         return render([
           { at: 0, dur: 0.45, f0: 1046.5, peak: 0.11, partial: [2.76, 0.18] },
           { at: 0.09, dur: 0.7, f0: 1568, peak: 0.09, partial: [2.76, 0.18] },
+        ]);
+      case "phaseChime":
+        // Three soft rising bells (G5 C6 E6) before a focus phase is announced
+        return render([
+          { at: 0, dur: 0.9, f0: 784, peak: 0.16, partial: [2.76, 0.15] },
+          { at: 0.18, dur: 0.9, f0: 1046.5, peak: 0.14, partial: [2.76, 0.15] },
+          { at: 0.36, dur: 1.2, f0: 1318.5, peak: 0.12, partial: [2.76, 0.15] },
         ]);
     }
   });

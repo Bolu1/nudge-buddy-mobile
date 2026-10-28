@@ -7,6 +7,7 @@ import { account, getToken } from "../api";
 import { WEB_URL } from "../config";
 import { getPref, setPref } from "../storage";
 import { PREFS } from "../prefs";
+import { configureAudioSession, playCueSound } from "../sounds";
 import { DEFAULT_VOICE_ID } from "../voices";
 import {
   AMBIENT_TRACKS_INFO,
@@ -88,6 +89,8 @@ interface VoiceCtx {
   toggleMute: () => void;
   setMutedState: (muted: boolean) => void;
   speak: (text: string) => void;
+  /** Chime, then speak — for announcements the user didn't ask for (focus phase changes) */
+  announce: (text: string) => void;
   stopSpeaking: () => void;
   nextTrack: () => void;
   stopMusic: () => void;
@@ -232,6 +235,7 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
 
   // Native engine events (subscribed for the provider's lifetime)
   useEffect(() => {
+    configureAudioSession();
     const subs = [
       VoiceEngine.addListener("onMic", (e) => onMicChunk(e.pcm)),
       VoiceEngine.addListener("onPlaybackEnded", (e) => {
@@ -397,6 +401,8 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
       engineRunningRef.current = false;
       VoiceEngine.stop();
       if (callKitId) VoiceEngine.endCall(callKitId);
+      // The engine had its own audio session — back to the one for speech outside calls
+      configureAudioSession();
     }, 450);
     const onEnd = onEndRef.current;
     onEndRef.current = null;
@@ -639,6 +645,17 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
     if (ttsItemsRef.current.length === 0) { finishTts(); return; }
     void runTtsQueue(gen);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const announce = useCallback((text: string) => {
+    let chimeMs: number;
+    if (engineRunningRef.current) {
+      playCue("phaseChime");
+      chimeMs = (cuePcm("phaseChime").length / BYTES_PER_SEC) * 1000;
+    } else {
+      chimeMs = playCueSound("phaseChime");
+    }
+    setTimeout(() => speak(text), chimeMs + 150);
+  }, [speak]);
 
   const stopSpeaking = useCallback(() => stopSpeakingInternal(), []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -936,7 +953,7 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
       value={{
         micActive, muted, ttsActive, ttsLoading, userSpeaking, interimTranscript, sessionSeconds,
         musicPlaying, musicTrackName, isPremium, selectedVoiceId, musicMixCats, musicOffTracks, musicLoopSrc,
-        setMusicMix, setMusicLoop, startSession, endSession, toggleMute, setMutedState, speak, stopSpeaking,
+        setMusicMix, setMusicLoop, startSession, endSession, toggleMute, setMutedState, speak, announce, stopSpeaking,
         nextTrack, stopMusic, playMusic, notifyActivity, setVoiceId, playThinkingCue, previewVoice,
       }}
     >

@@ -6,6 +6,7 @@ import { push as pushApi, reminders as remindersApi } from "./api";
 import { onChange } from "./events";
 import { getPref } from "./storage";
 import { PREFS } from "./prefs";
+import { setBackgroundKeepAlive } from "./sounds";
 import { useActiveFocus, type ActiveFocusSession } from "./use-active-focus";
 import { useCurrentBlock, type CurrentBlock } from "./use-current-block";
 import { useVoice } from "./voice/voice-context";
@@ -15,8 +16,9 @@ import { useWs } from "./ws-context";
 // on Android, ongoing notifications with a live timer (Live Update chips on 16+):
 // the focus timer, the next reminder, the current workday block and live
 // buddy calls. Timers are rendered by the system from the end/start dates,
-// so they keep ticking with the app closed; phase changes while the app is
-// suspended come from the backend via the activities' push tokens.
+// so they keep ticking with the app closed. Phase changes need either the
+// backend (via the activities' push tokens) or the app awake: during a focus
+// session the app keeps itself running in the background (see below).
 
 const REMINDER_LOOKAHEAD_MS = 60 * 60 * 1000;  // show a reminder from an hour before it's due
 const FIRED_REMINDER_LINGER_S = 10 * 60;       // keep a fired reminder on the lock screen this long
@@ -187,6 +189,14 @@ export function useLiveActivities() {
     [activeFocus, paused, pausedSecs],
   );
   useEffect(() => { if (enabled) sync("focus", focus); }, [enabled, focus]);
+
+  // Stay awake in the background while the timer runs, so the phase change is
+  // announced and reaches the Dynamic Island. A call keeps the app awake itself.
+  const keepAwake = Platform.OS === "ios" && !!activeFocus && !paused && !micActive;
+  useEffect(() => {
+    setBackgroundKeepAlive(keepAwake);
+    return () => setBackgroundKeepAlive(false);
+  }, [keepAwake]);
 
   // Current workday block
   const block = useMemo(() => (currentBlock ? blockState(currentBlock) : null), [currentBlock]);

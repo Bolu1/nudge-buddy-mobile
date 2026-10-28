@@ -17,6 +17,7 @@ export interface ActiveFocusSession {
 }
 
 const POLL_MS = 30_000;
+const PHASE_END_GRACE_MS = 3_000;
 
 function secsRemaining(phaseEndsAt: string): number {
   return Math.max(0, Math.round((new Date(phaseEndsAt).getTime() - Date.now()) / 1000));
@@ -91,6 +92,14 @@ export function useActiveFocus() {
     const id = setInterval(() => setSeconds(secsRemaining(session.phaseEndsAt)), 1000);
     return () => clearInterval(id);
   }, [session, paused]);
+
+  // Reload just after the phase ends, in case the websocket transition is missed
+  useEffect(() => {
+    if (!session || paused) return;
+    const ms = new Date(session.phaseEndsAt).getTime() - Date.now() + PHASE_END_GRACE_MS;
+    const id = setTimeout(load, Math.max(PHASE_END_GRACE_MS, ms));
+    return () => clearTimeout(id);
+  }, [session, paused, load]);
 
   return {
     activeFocus: session,
