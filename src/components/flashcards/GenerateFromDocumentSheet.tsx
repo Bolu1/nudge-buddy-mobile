@@ -71,7 +71,15 @@ function GenerateFromDocumentForm({
     const count = Math.max(1, Math.min(remaining, Number(countText) || 1));
     setBusy(true);
     setError("");
-    const res = await flashcardsApi.generateFromDocument(asset, { count, collectionId });
+    let res: Awaited<ReturnType<typeof flashcardsApi.generateFromDocument>>;
+    try {
+      res = await flashcardsApi.generateFromDocument(asset, { count, collectionId });
+    } catch {
+      // No response at all: offline, or the phone gave up waiting
+      setBusy(false);
+      setError("We couldn't reach Nudge Buddy, or it took too long. Check your connection, or try fewer cards or a shorter document.");
+      return;
+    }
     setBusy(false);
     const result = res.ok ? unwrap<GenerateResult>(res) : null;
     if (!result) { setError(apiError(res, "We couldn't create cards from this document.")); return; }

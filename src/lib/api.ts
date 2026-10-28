@@ -1,3 +1,4 @@
+import { File } from "expo-file-system";
 import { API_URL } from "./config";
 import { getToken, getRefreshToken, setTokens, clearAllTokens } from "./storage";
 
@@ -309,8 +310,9 @@ export const flashcards = {
     opts: { count: number; collectionId?: string }
   ) => {
     const form = new FormData();
-    // React Native's FormData takes a { uri, name, type } descriptor for files
-    form.append("file", { uri: file.uri, name: file.name, type: file.mimeType || "application/octet-stream" } as unknown as Blob);
+    // fetch here is expo/fetch, which rejects React Native's { uri, name, type }
+    // descriptor; an expo-file-system File reads its own bytes and type
+    form.append("file", new File(file.uri) as unknown as Blob, file.name);
     form.append("count", String(opts.count));
     if (opts.collectionId) form.append("collectionId", opts.collectionId);
     return apiFetch("/flashcards/generate", { method: "POST", body: form });

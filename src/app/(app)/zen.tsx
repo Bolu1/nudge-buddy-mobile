@@ -190,6 +190,8 @@ export default function ZenScreen() {
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [glReady, setGlReady] = useState(false);
+  // The 3D room couldn't start (or broke) — show a note instead of taking the app down
+  const [glFailed, setGlFailed] = useState(false);
   const [theme, setTheme] = useState<RoomTheme>(savedRoom);
   const [timeMode, setTimeMode] = useState<TimeMode>(savedTime);
   const [clockTime, setClockTime] = useState<TimeOfDay>(() => timeFromClock());
@@ -231,10 +233,20 @@ export default function ZenScreen() {
 
   // ── Renderer + loop ──────────────────────────────────────────────────────
   const onContextCreate = useCallback((gl: ExpoWebGLRenderingContext) => {
-    const renderer = createRenderer(gl);
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = createRenderer(gl);
+    } catch (err) {
+      console.warn("Zen: renderer failed", err);
+      setGlFailed(true);
+      return;
+    }
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
+    // Each shader check is a blocking round trip to expo-gl's GL thread — dozens
+    // of them stall the first frames
+    renderer.debug.checkShaderErrors = false;
     rendererRef.current = renderer;
 
     const camera = new THREE.PerspectiveCamera(32, gl.drawingBufferWidth / gl.drawingBufferHeight, 0.1, 100);
@@ -278,10 +290,17 @@ export default function ZenScreen() {
       camera.position.copy(look).add(offset);
       camera.lookAt(look);
 
-      director.update(t, dt);
-      room.update(t, dt);
-      renderer.render(room.scene, camera);
-      gl.endFrameEXP();
+      try {
+        director.update(t, dt);
+        room.update(t, dt);
+        renderer.render(room.scene, camera);
+        gl.endFrameEXP();
+      } catch (err) {
+        cancelAnimationFrame(rafRef.current);
+        console.warn("Zen: frame failed", err);
+        setGlFailed(true);
+        return;
+      }
 
       headPos.copy(director.position).y += 0.55;
       headPos.project(camera);
@@ -321,8 +340,17 @@ export default function ZenScreen() {
     setPref(PREFS.zenRoom, theme);
     const timer = setTimeout(() => {
       directorRef.current?.dispose();
+      directorRef.current = null;
       roomRef.current?.dispose();
-      const room = buildRoom(theme, time);
+      roomRef.current = null;
+      let room: Room;
+      try {
+        room = buildRoom(theme, time);
+      } catch (err) {
+        console.warn("Zen: room failed", err);
+        setGlFailed(true);
+        return;
+      }
       renderer.toneMappingExposure = room.exposure;
       roomRef.current = room;
       // Before the first frame the camera is still at the origin, so fall back to the default view direction
@@ -511,6 +539,13 @@ export default function ZenScreen() {
 
       {/* Cross-fade veil while the room is rebuilt */}
       <Animated.View pointerEvents="none" style={[{ position: "absolute", inset: 0, backgroundColor: "#000" }, veilStyle]} />
+
+      {glFailed ? (
+        <View pointerEvents="none" style={{ position: "absolute", inset: 0 }} className="items-center justify-center px-10">
+          <Text style={{ color: fg, fontSize: 15, fontWeight: "500", textAlign: "center" }}>{"Buddy's room couldn't load on this phone."}</Text>
+          <Text style={{ color: dim, fontSize: 13, textAlign: "center", marginTop: 6 }}>You can still talk to Buddy and play music here.</Text>
+        </View>
+      ) : null}
 
       {/* Top controls — fade away when idle */}
       <Animated.View
