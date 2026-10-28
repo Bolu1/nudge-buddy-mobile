@@ -572,6 +572,10 @@ export const push = {
       body: JSON.stringify(body),
     }),
 
+  /** The activity ended (finished or dismissed) — its token must not count as delivered any more */
+  unregisterLiveActivity: (activityId: string) =>
+    apiFetch(`/push/live-activities/${encodeURIComponent(activityId)}`, { method: "DELETE" }),
+
   /** iOS 17.2+: token that lets the backend *start* a Live Activity (reminder due while the app is closed) */
   registerLiveActivityStartToken: (body: { token: string }) =>
     apiFetch("/push/live-activities/start-token", {

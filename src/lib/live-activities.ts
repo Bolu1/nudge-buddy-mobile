@@ -57,7 +57,10 @@ function sync(kind: LiveKind, state: LiveState | null, opts: { alert?: { title: 
   s.busy = s.busy.then(async () => {
     try {
       if (!state) {
-        if (s.id) await LiveActivity!.end(s.id, null, null);
+        if (s.id) {
+          await LiveActivity!.end(s.id, null, null);
+          pushApi.unregisterLiveActivity(s.id).catch(() => {});
+        }
         s.id = null;
         s.json = "";
         return;
@@ -158,9 +161,11 @@ export function useLiveActivities() {
       LiveActivity.addListener("onPushToStartToken", ({ token }) => {
         pushApi.registerLiveActivityStartToken({ token }).catch(() => {});
       }),
+      // Ended by us, the backend, or the user swiping it away
       LiveActivity.addListener("onActivityEnded", ({ id, kind }) => {
         const s = slot(kind);
         if (s.id === id) { s.id = null; s.json = ""; }
+        pushApi.unregisterLiveActivity(id).catch(() => {});
       }),
     ];
     return () => subs.forEach((s) => s.remove());

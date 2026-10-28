@@ -54,7 +54,9 @@
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
     "build:dev": "npx eas-cli@latest build --profile development",
-    "prebuild": "expo prebuild --clean"
+    "prebuild": "expo prebuild --clean",
+    "testflight": "bash scripts/testflight.sh",
+    "prepare": "git config core.hooksPath .githooks || true"
   },
   "private": true
 }

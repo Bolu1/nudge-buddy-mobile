@@ -38,6 +38,8 @@ const appConfig = ({ config }: ConfigContext): ExpoConfig => ({
   backgroundColor: "#151311",
   ios: {
     bundleIdentifier: process.env.IOS_BUNDLE_ID ?? "com.boluadetifa.nudgebuddy",
+    // Set per upload by scripts/testflight.sh (each TestFlight build needs a higher one)
+    buildNumber: process.env.IOS_BUILD_NUMBER,
     // Needed to sign the Live Activity widget extension
     appleTeamId: process.env.APPLE_TEAM_ID ?? "6PP44GSHNR",
     supportsTablet: false,

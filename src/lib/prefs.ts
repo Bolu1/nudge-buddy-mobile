@@ -9,6 +9,11 @@ export const PREFS = {
   tutorialSeen: "nudge:tutorialSeen",
   // Face ID / fingerprint to open the app — "1" = on
   appLock: "nudge:appLock",
+  // Last focus timer setup, used for the next session
+  pomoWork: "pomo_work",
+  pomoShort: "pomo_short",
+  pomoLong: "pomo_long",
+  pomoCycles: "pomo_cycles",
 } as const;
 
 export const PREF_KEYS = Object.values(PREFS);

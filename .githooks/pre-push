@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Pushing to main uploads a new TestFlight build (scripts/testflight.sh).
+# It runs in the background so the push isn't held up; a macOS notification
+# says when it's uploaded or failed. Skip it with: SKIP_TESTFLIGHT=1 git push
+set -u
+cd "$(git rev-parse --show-toplevel)"
+
+[ "${SKIP_TESTFLIGHT:-}" = "1" ] && exit 0
+
+pushes_main=0
+while read -r _local_ref local_sha remote_ref _remote_sha; do
+  # A deleted branch pushes an all-zero sha
+  if [ "$remote_ref" = "refs/heads/main" ] && [ "${local_sha//0/}" != "" ]; then pushes_main=1; fi
+done
+[ $pushes_main = 1 ] || exit 0
+
+LOCK=/tmp/nudge-buddy-testflight.lock
+if [ -e "$LOCK" ] && kill -0 "$(cat "$LOCK")" 2>/dev/null; then
+  echo "▸ TestFlight: a build is already running — not starting another"
+  exit 0
+fi
+
+LOG="$PWD/testflight.log"
+notify() { osascript -e "display notification \"$1\" with title \"Nudge Buddy TestFlight\"" >/dev/null 2>&1 || true; }
+
+(
+  trap 'rm -f "$LOCK"' EXIT
+  if bash scripts/testflight.sh >"$LOG" 2>&1; then
+    notify "Uploaded — it shows in TestFlight after Apple's processing."
+  else
+    notify "Build failed — see testflight.log"
+  fi
+) </dev/null >/dev/null 2>&1 &
+echo $! >"$LOCK"
+disown
+
+echo "▸ TestFlight build started in the background (log: testflight.log)"
+exit 0

@@ -5,6 +5,7 @@ import Svg, { Circle } from "react-native-svg";
 import { pomodoro } from "@/lib/api";
 import { emitChange, onChange } from "@/lib/events";
 import { getPref, setPref } from "@/lib/storage";
+import { PREFS } from "@/lib/prefs";
 import { colors } from "@/lib/theme";
 import { useWs } from "@/lib/ws-context";
 import { Button, ErrorBanner, Icon, IconButton, ScreenHeader, SectionTitle } from "@/components/ui";
@@ -47,7 +48,7 @@ const suggestions = [
   "Take 3 slow breaths before you begin.",
 ];
 
-const CFG = { work: "pomo_work", short: "pomo_short", long: "pomo_long", cycles: "pomo_cycles" } as const;
+const CFG = { work: PREFS.pomoWork, short: PREFS.pomoShort, long: PREFS.pomoLong, cycles: PREFS.pomoCycles } as const;
 const cfgNum = (key: string, fallback: number) => Number(getPref(key) ?? fallback) || fallback;
 
 function formatTime(seconds: number) {
