@@ -8,6 +8,8 @@ import { Mascot } from "@/components/Mascot";
 
 /** Coming back after this long in the background asks to unlock again */
 const LOCK_AFTER_MS = 30_000;
+/** iOS refuses Face ID while the app is still becoming active — give it a moment */
+const PROMPT_DELAY_MS = 350;
 
 /**
  * App lock screen (when turned on in Settings). Locks on launch and after the
@@ -23,15 +25,18 @@ export function AppLock() {
   const [label, setLabel] = useState("Face ID");
   const backgroundedAt = useRef<number | null>(null);
   const prompting = useRef(false);
+  // Cancelling (or failing) Face ID shouldn't bring it straight back — wait until they leave and return
+  const userCancelled = useRef(false);
   const micActiveRef = useRef(micActive);
   useEffect(() => { micActiveRef.current = micActive; }, [micActive]);
 
   const unlock = useCallback(async () => {
     if (prompting.current) return;
     prompting.current = true;
-    const ok = await authenticate();
+    const result = await authenticate();
     prompting.current = false;
-    if (ok) setLocked(false);
+    if (result === "ok") setLocked(false);
+    else if (result === "refused") userCancelled.current = true;
   }, []);
 
   useEffect(() => { void biometricLabel().then((l) => { if (l) setLabel(l); }); }, []);
@@ -39,9 +44,22 @@ export function AppLock() {
   // Whoever signs in next on this phone starts without the lock
   useEffect(() => registerBeforeSignOut(() => { void setAppLock(false); }), [registerBeforeSignOut]);
 
-  // Ask straight away whenever the lock comes up with the app on screen
+  // Start Face ID by itself whenever the lock is up and the app is on screen —
+  // at launch the app isn't active yet, so also wait for it to become active
   useEffect(() => {
-    if (locked && AppState.currentState === "active") void unlock();
+    if (!locked) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const ask = () => {
+      if (userCancelled.current) return;
+      clearTimeout(timer);
+      timer = setTimeout(() => void unlock(), PROMPT_DELAY_MS);
+    };
+    if (AppState.currentState === "active") ask();
+    const sub = AppState.addEventListener("change", (s) => {
+      if (s === "background") userCancelled.current = false;
+      if (s === "active") ask();
+    });
+    return () => { clearTimeout(timer); sub.remove(); };
   }, [locked, unlock]);
 
   useEffect(() => {
@@ -71,7 +89,7 @@ export function AppLock() {
               <Text className="text-outline text-sm text-center">Use {label} to open the app.</Text>
             </View>
             <View className="w-full gap-3">
-              <Button title={`Unlock with ${label}`} onPress={() => void unlock()} />
+              <Button title={`Unlock with ${label}`} onPress={() => { userCancelled.current = false; void unlock(); }} />
               <Pressable onPress={() => void signOut()} hitSlop={8} className="py-2 items-center">
                 <Text className="text-outline text-sm">Sign out</Text>
               </Pressable>

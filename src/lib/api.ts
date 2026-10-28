@@ -54,7 +54,8 @@ export async function apiFetch<T = unknown>(
 ): Promise<{ ok: boolean; status: number; data: T }> {
   const makeRequest = (authToken: string | null) => {
     const headers: Record<string, string> = {
-      "Content-Type": "application/json",
+      // Uploads let fetch set the multipart boundary
+      ...(options?.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
       ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
       ...(options?.headers as Record<string, string> | undefined),
     };
@@ -273,6 +274,47 @@ export const notes = {
     }),
 
   delete: (id: string) => apiFetch(`/notes/${id}`, { method: "DELETE" }),
+};
+
+export const flashcards = {
+  list: () => apiFetch("/flashcards/collections"),
+
+  get: (id: string) => apiFetch(`/flashcards/collections/${id}`),
+
+  create: (body: {
+    title: string;
+    description?: string;
+    theme: string;
+    cards?: { question: string; answer: string }[];
+  }) => apiFetch("/flashcards/collections", { method: "POST", body: JSON.stringify(body) }),
+
+  update: (id: string, body: { title?: string; description?: string; theme?: string }) =>
+    apiFetch(`/flashcards/collections/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+
+  delete: (id: string) => apiFetch(`/flashcards/collections/${id}`, { method: "DELETE" }),
+
+  replaceCards: (id: string, cards: { id?: string; question: string; answer: string }[]) =>
+    apiFetch(`/flashcards/collections/${id}/cards`, { method: "PUT", body: JSON.stringify({ cards }) }),
+
+  sessions: (id: string) => apiFetch(`/flashcards/collections/${id}/sessions`),
+
+  saveSession: (
+    id: string,
+    body: { mode: "ALL" | "MISSED"; durationMs: number; results: { cardId: string; correct: boolean; timeMs: number }[] }
+  ) => apiFetch(`/flashcards/collections/${id}/sessions`, { method: "POST", body: JSON.stringify(body) }),
+
+  /** Draft cards from a picked PDF/DOCX/TXT/MD file; nothing is saved until the cards are. */
+  generateFromDocument: (
+    file: { uri: string; name: string; mimeType?: string },
+    opts: { count: number; collectionId?: string }
+  ) => {
+    const form = new FormData();
+    // React Native's FormData takes a { uri, name, type } descriptor for files
+    form.append("file", { uri: file.uri, name: file.name, type: file.mimeType || "application/octet-stream" } as unknown as Blob);
+    form.append("count", String(opts.count));
+    if (opts.collectionId) form.append("collectionId", opts.collectionId);
+    return apiFetch("/flashcards/generate", { method: "POST", body: form });
+  },
 };
 
 export const reminders = {

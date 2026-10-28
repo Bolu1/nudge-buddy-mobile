@@ -26,19 +26,27 @@ export async function biometricLabel(): Promise<string | null> {
   }
 }
 
-/** Ask for biometrics (the phone's passcode is offered if they fail). True when it passes. */
-export async function authenticate(reason = "Unlock Nudge Buddy"): Promise<boolean> {
+/** iOS / Android stopped the prompt (app went inactive, another prompt…) — worth asking again */
+const INTERRUPTED = new Set(["system_cancel", "app_cancel", "not_interactive"]);
+
+/**
+ * Ask for biometrics (the phone's passcode is offered if they fail).
+ * "interrupted": the system cut it short, so asking again is fine.
+ * "refused": cancelled by the person, or biometrics failed — don't keep asking.
+ */
+export async function authenticate(reason = "Unlock Nudge Buddy"): Promise<"ok" | "interrupted" | "refused"> {
   try {
     const res = await LocalAuthentication.authenticateAsync({ promptMessage: reason, cancelLabel: "Cancel" });
-    return res.success;
+    if (res.success) return "ok";
+    return INTERRUPTED.has(res.error) ? "interrupted" : "refused";
   } catch {
-    return false;
+    return "interrupted";
   }
 }
 
 /** Turning it on needs a successful check first, so nobody locks themselves out */
 export async function setAppLock(on: boolean): Promise<boolean> {
-  if (on && !(await authenticate("Turn on App lock"))) return false;
+  if (on && (await authenticate("Turn on App lock")) !== "ok") return false;
   setPref(PREFS.appLock, on ? "1" : null);
   return true;
 }

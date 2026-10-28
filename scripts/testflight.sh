@@ -16,6 +16,10 @@ UPLOAD=1
 
 # .env feeds both the config (team, bundle id) and the JS bundle (EXPO_PUBLIC_*)
 if [ -f .env ]; then set -a; . ./.env; set +a; fi
+# Git hooks don't get your shell's PATH — find Homebrew (CocoaPods) ourselves
+for brew in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+  if [ -x "$brew" ]; then eval "$("$brew" shellenv)"; break; fi
+done
 export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 # CocoaPods needs a UTF-8 locale
 export CI=1                                 # no interactive prompts from expo
 
@@ -43,6 +47,11 @@ echo "▸ Nudge Buddy $VERSION ($IOS_BUILD_NUMBER)"
 
 echo "▸ Generating the iOS project"
 npx expo prebuild --platform ios --clean >/dev/null
+# prebuild only warns when CocoaPods is missing or fails
+if [ ! -d ios/NudgeBuddy.xcworkspace ]; then
+  echo "✗ CocoaPods didn't install (no ios/NudgeBuddy.xcworkspace). Is 'pod' installed? brew install cocoapods" >&2
+  exit 1
+fi
 mkdir -p "$OUT"
 : >"$LOG"
 

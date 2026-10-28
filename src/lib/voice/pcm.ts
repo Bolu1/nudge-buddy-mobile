@@ -63,9 +63,58 @@ function cached(key: string, make: () => Uint8Array) {
   return v;
 }
 
-export type Cue = "mute" | "unmute" | "end" | "thinking" | "taskComplete" | "phaseChime";
+export type Cue = "mute" | "unmute" | "end" | "thinking" | "taskComplete" | "phaseChime" | "zenSwell";
+
+/**
+ * Entering Zen: a warm Cmaj9 chord that swells in and fades away, with a bell
+ * shimmer near the top and a short echo — the web's Web Audio swell, rendered.
+ */
+function zenSwell(): Uint8Array {
+  const VOLUME = 0.25; // a little louder than the web — phone speakers are small
+  const PEAK = 1.4;
+  const END = 4.2;
+  const ECHO = 0.28;
+  const n = Math.ceil((END + 3 * ECHO + 0.1) * SAMPLE_RATE);
+  const dry = new Float32Array(n);
+  // Exponential ramp 0.0001 → 1 at `peak` → 0.0001 at `end`
+  const env = (t: number, peak: number, end: number) =>
+    t < peak ? Math.pow(10000, t / peak) / 10000 : t < end ? Math.pow(0.0001, (t - peak) / (end - peak)) : 0;
+  const notes = [130.81, 196.0, 329.63, 493.88, 587.33];
+  notes.forEach((freq, i) => {
+    const level = (i < 2 ? 0.5 : 0.28) / notes.length;
+    const start = i * 0.06;
+    for (const cents of [-6, 6]) {
+      const f = freq * Math.pow(2, cents / 1200);
+      for (let k = Math.floor(start * SAMPLE_RATE); k < END * SAMPLE_RATE; k++) {
+        const ph = 2 * Math.PI * f * (k / SAMPLE_RATE - start);
+        // Low notes pure, upper ones a soft (band-limited) triangle
+        const v = i < 2 ? Math.sin(ph) : Math.sin(ph) - Math.sin(3 * ph) / 9 + Math.sin(5 * ph) / 25;
+        dry[k] += v * level;
+      }
+    }
+  });
+  let vibPhase = 0;
+  let shimmerPhase = 0;
+  for (let k = 0; k < END * SAMPLE_RATE; k++) {
+    const t = k / SAMPLE_RATE;
+    vibPhase += (2 * Math.PI * 5) / SAMPLE_RATE;
+    shimmerPhase += (2 * Math.PI * (1318.5 + Math.sin(vibPhase) * 4)) / SAMPLE_RATE;
+    dry[k] += Math.sin(shimmerPhase) * 0.05 * env(t, PEAK - 0.2, END - 0.6);
+  }
+  const out = new Float32Array(n);
+  for (let k = 0; k < n; k++) {
+    const v = dry[k] * VOLUME * env(k / SAMPLE_RATE, PEAK, END);
+    // Echo taps (feedback 0.25)
+    for (let tap = 0, g = 1; tap < 4; tap++, g *= 0.25) {
+      const j = k + Math.round(tap * ECHO * SAMPLE_RATE);
+      if (j < n) out[j] += v * g;
+    }
+  }
+  return floatToPcm16(out);
+}
 
 export function cuePcm(cue: Cue): Uint8Array {
+  if (cue === "zenSwell") return cached(cue, zenSwell);
   return cached(cue, () => {
     switch (cue) {
       case "mute":

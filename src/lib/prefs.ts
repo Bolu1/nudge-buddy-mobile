@@ -14,6 +14,11 @@ export const PREFS = {
   pomoShort: "pomo_short",
   pomoLong: "pomo_long",
   pomoCycles: "pomo_cycles",
+  // Zen room and time of day ("auto" follows the clock)
+  zenRoom: "zen_room",
+  zenTime: "zen_time",
+  // Flashcard study order — "0" = keep the saved order, otherwise shuffled
+  flashcardShuffle: "nudge:flashcardShuffle",
 } as const;
 
 export const PREF_KEYS = Object.values(PREFS);

@@ -131,6 +131,14 @@ export default function WorkspaceScreen() {
               </Pressable>
             ) : null}
             <Pressable
+              onPress={() => router.push("/zen")}
+              accessibilityLabel="Zen mode"
+              className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-low border border-divider"
+            >
+              <Icon name="sparkles" size={13} color={colors.primaryContainer} />
+              <Text className="text-primary text-xs">Zen</Text>
+            </Pressable>
+            <Pressable
               onPress={() => { setShowHelp(true); setHelpGlow(false); }}
               accessibilityLabel="What can I say?"
               className={`w-9 h-9 rounded-full items-center justify-center ${helpGlow ? "bg-on-primary-container" : "bg-surface-low border border-divider"}`}

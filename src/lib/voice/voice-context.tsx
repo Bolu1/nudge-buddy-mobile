@@ -98,6 +98,8 @@ interface VoiceCtx {
   notifyActivity: () => void;
   setVoiceId: (id: string) => void;
   playThinkingCue: () => void;
+  /** A UI sound — through the call audio during a call, otherwise as a plain sound */
+  playSound: (cue: Cue) => void;
   /** Speak a sample of a voice (settings) */
   previewVoice: (voiceId: string) => void;
 }
@@ -663,6 +665,11 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
     if (!ttsActiveRef.current) playCue("thinking");
   }, []);
 
+  const playSound = useCallback((cue: Cue) => {
+    if (engineRunningRef.current) playCue(cue);
+    else playCueSound(cue);
+  }, []);
+
   const previewVoice = useCallback((voiceId: string) => {
     haltTts();
     const gen = ttsGenRef.current;
@@ -954,7 +961,7 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
         micActive, muted, ttsActive, ttsLoading, userSpeaking, interimTranscript, sessionSeconds,
         musicPlaying, musicTrackName, isPremium, selectedVoiceId, musicMixCats, musicOffTracks, musicLoopSrc,
         setMusicMix, setMusicLoop, startSession, endSession, toggleMute, setMutedState, speak, announce, stopSpeaking,
-        nextTrack, stopMusic, playMusic, notifyActivity, setVoiceId, playThinkingCue, previewVoice,
+        nextTrack, stopMusic, playMusic, notifyActivity, setVoiceId, playThinkingCue, playSound, previewVoice,
       }}
     >
       {children}

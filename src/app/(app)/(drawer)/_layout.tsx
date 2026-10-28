@@ -20,6 +20,7 @@ const MAIN: { name: string; title: string; icon: IconName }[] = [
   { name: "workday", title: "Workday", icon: "sun" },
   { name: "boards", title: "Boards", icon: "grid" },
   { name: "notes", title: "Brain Dump", icon: "file-text" },
+  { name: "flashcards", title: "Flashcards", icon: "layers" },
   { name: "focus", title: "Focus", icon: "target" },
   { name: "calendar", title: "Calendar", icon: "calendar" },
   { name: "insights", title: "Insights", icon: "bar-chart" },
@@ -74,7 +75,7 @@ function Menu({ state, navigation }: DrawerContentComponentProps) {
     navigation.navigate(name);
   }
 
-  function goOutside(path: "/boards/invites") {
+  function goOutside(path: "/boards/invites" | "/zen") {
     navigation.closeDrawer();
     router.push(path);
   }
@@ -113,6 +114,7 @@ function Menu({ state, navigation }: DrawerContentComponentProps) {
             hint={item.name === "focus" && activeFocus ? `${fmtDuration(seconds)}${paused ? " · paused" : ""}` : undefined}
           />
         ))}
+        <Row icon="sparkles" title="Zen" onPress={() => goOutside("/zen")} hint="Buddy's room" />
         <View className="h-px bg-divider mx-4 my-3" />
         <Row icon="mail" title="Board invites" onPress={() => goOutside("/boards/invites")} badge={invites} />
         <Row icon="settings" title="Settings" active={current === "settings"} onPress={() => go("settings")} />

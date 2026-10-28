@@ -1,7 +1,7 @@
 // Tiny pub/sub so screens can refresh when something changes elsewhere
 // (the assistant created a task, a board invite was accepted, …).
 
-export type DataTopic = "tasks" | "notes" | "workday" | "focus" | "boards" | "invites" | "calendar";
+export type DataTopic = "tasks" | "notes" | "workday" | "focus" | "boards" | "invites" | "calendar" | "flashcards";
 
 const listeners = new Map<DataTopic, Set<() => void>>();
 

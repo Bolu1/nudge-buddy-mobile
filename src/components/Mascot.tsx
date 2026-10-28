@@ -45,3 +45,28 @@ const HEAD_XML = MASCOT_XML.replace('viewBox="0 0 200 200"', 'viewBox="34 16 132
 export function Mascot({ size = 32, variant = "head" }: { size?: number; variant?: "full" | "head" }) {
   return <SvgXml xml={variant === "full" ? MASCOT_XML : HEAD_XML} width={size} height={size} />;
 }
+
+const HAPPY_FACE = `  <path d="M 72 96 C 72 87 84 87 84 96" fill="none" stroke="#b6cdb2" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M 116 96 C 116 87 128 87 128 96" fill="none" stroke="#b6cdb2" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M 95 106 Q 100 110 105 106" fill="none" stroke="#b6cdb2" stroke-width="3" stroke-linecap="round"/>`;
+
+// One eye open, one winking, bigger grin
+const WINK_FACE = `  <ellipse cx="78" cy="93" rx="5.5" ry="7" fill="#b6cdb2"/>
+  <path d="M 116 96 C 116 87 128 87 128 96" fill="none" stroke="#b6cdb2" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M 92 104 Q 100 116 108 104 Z" fill="#b6cdb2" stroke="#b6cdb2" stroke-width="2" stroke-linejoin="round"/>`;
+
+const PARTY_HAT = `  <g transform="rotate(-12 100 46)">
+    <path d="M 80 50 L 100 4 L 120 50 Z" fill="#f7b8a5"/>
+    <path d="M 91 25 L 109 25 L 112 32 L 88 32 Z M 84 41 L 116 41 L 118 46 L 82 46 Z" fill="#e7e1de" opacity="0.85"/>
+    <ellipse cx="100" cy="50" rx="22" ry="4" fill="#673b2d"/>
+    <circle cx="100" cy="5" r="6" fill="#b6cdb2"/>
+  </g>
+</svg>`;
+
+const PARTY_XML = MASCOT_XML.replace("</svg>", PARTY_HAT);
+const PARTY_WINK_XML = PARTY_XML.replace(HAPPY_FACE, WINK_FACE);
+
+/** Full Buddy in a party hat — winking unless `wink` is false. For celebrations. */
+export function PartyMascot({ size = 112, wink = true }: { size?: number; wink?: boolean }) {
+  return <SvgXml xml={wink ? PARTY_WINK_XML : PARTY_XML} width={size} height={size} />;
+}

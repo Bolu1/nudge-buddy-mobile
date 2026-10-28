@@ -57,6 +57,9 @@ export default function AppLayout() {
               <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
                 <Stack.Screen name="(drawer)" />
                 <Stack.Screen name="call" options={{ animation: "fade" }} />
+                <Stack.Screen name="zen" options={{ animation: "fade", presentation: "fullScreenModal" }} />
+                {/* Quitting a study session asks first, so no swipe-back */}
+                <Stack.Screen name="flashcards/[collectionId]/study" options={{ gestureEnabled: false }} />
               </Stack>
               <CallBar bottomOffset={insets.bottom} />
               <AppLock />
