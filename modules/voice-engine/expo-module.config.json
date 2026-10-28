@@ -1,0 +1,10 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["VoiceEngineModule"],
+    "appDelegateSubscribers": ["VoiceEngineAppDelegateSubscriber"]
+  },
+  "android": {
+    "modules": ["expo.modules.voiceengine.VoiceEngineModule"]
+  }
+}

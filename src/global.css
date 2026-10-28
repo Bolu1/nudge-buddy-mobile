@@ -1,0 +1,42 @@
+@import "tailwindcss";
+@import "uniwind";
+
+/* Lumina Focus — Warm Dark palette (same tokens as the web app) */
+@theme {
+  --color-bg: #151311;
+  --color-surface-lowest: #100e0c;
+  --color-surface-low: #1d1b19;
+  --color-surface: #211f1d;
+  --color-surface-high: #2c2927;
+  --color-surface-highest: #373432;
+  --color-surface-bright: #3b3936;
+
+  --color-on-surface: #e7e1de;
+  --color-on-surface-variant: #c3c8bf;
+  --color-outline: #8d928a;
+  --color-outline-variant: #434842;
+
+  --color-primary: #b6cdb2;
+  --color-primary-container: #8da38a;
+  --color-on-primary: #223522;
+  --color-on-primary-container: #263926;
+  --color-primary-dim: #4f644e;
+
+  --color-secondary: #f7b8a5;
+  --color-secondary-container: #673b2d;
+  --color-on-secondary: #4c2619;
+  --color-on-secondary-variant: #e3a794;
+
+  --color-tertiary: #cac6c2;
+  --color-tertiary-container: #a09c99;
+
+  --color-error: #ffb4ab;
+  --color-error-container: #93000a;
+
+  /* Shades used inline on the web (bg-[#161412] etc.), named for reuse */
+  --color-field: #161412;
+  --color-field-border: #363330;
+  --color-divider: #2c2927;
+  --color-placeholder: #4a4844;
+  --color-gold: #c3a06e;
+}
