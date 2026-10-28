@@ -7,7 +7,6 @@ import { cuePcm, pcmToWavBase64, SAMPLE_RATE, type Cue } from "./voice/pcm";
 // by the voice engine instead — see VoiceProvider.playCue).
 
 const cuePlayers = new Map<Cue, AudioPlayer>();
-let keepAlive: AudioPlayer | null = null;
 
 /**
  * Audio session for everything outside a call: speech and chimes play with the
@@ -56,26 +55,4 @@ export function playCueSound(cue: Cue): number {
 export function playTaskCompleteSound() {
   void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
   playCueSound("taskComplete");
-}
-
-/**
- * Loops silence so iOS keeps the app running in the background. Used while a
- * focus session runs: without remote push the app itself has to be awake to
- * hear the phase change, announce it and update the Live Activity.
- */
-export function setBackgroundKeepAlive(on: boolean) {
-  try {
-    if (!on) {
-      keepAlive?.pause();
-      return;
-    }
-    if (!keepAlive) {
-      keepAlive = createAudioPlayer({ uri: wavFile("silence", () => new Uint8Array(SAMPLE_RATE * 2)) });
-      keepAlive.loop = true;
-    }
-    configureAudioSession();
-    keepAlive.play();
-  } catch {
-    /* worst case the app suspends like before */
-  }
 }

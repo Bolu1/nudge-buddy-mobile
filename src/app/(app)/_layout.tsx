@@ -11,13 +11,16 @@ import { ConversationProvider } from "@/lib/conversation-context";
 import { useCallHandling } from "@/lib/calls";
 import { useLiveActivities } from "@/lib/live-activities";
 import { registerForPush, unregisterPush, watchVoipToken } from "@/lib/push";
+import { usePresence } from "@/lib/use-presence";
 import { colors } from "@/lib/theme";
 import { CallBar } from "@/components/CallBar";
+import { AppLock } from "@/components/AppLock";
 
 /** Signed-in side effects: push registration, call wiring, Dynamic Island, timezone sync */
 function AppEffects({ children }: { children: ReactNode }) {
   const { registerBeforeSignOut } = useAuth();
   useCallHandling();
+  usePresence();
   useLiveActivities();
 
   useEffect(() => {
@@ -56,6 +59,7 @@ export default function AppLayout() {
                 <Stack.Screen name="call" options={{ animation: "fade" }} />
               </Stack>
               <CallBar bottomOffset={insets.bottom} />
+              <AppLock />
             </View>
           </AppEffects>
         </ConversationProvider>

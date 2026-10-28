@@ -8,8 +8,7 @@ import { AMBIENT_TRACKS_INFO, MUSIC_CATEGORIES, type MusicCategory } from "@/lib
 import { getPref, setPref } from "@/lib/storage";
 import { PREFS } from "@/lib/prefs";
 import { registerForPush } from "@/lib/push";
-import { liveKindEnabled, refreshLiveActivityPrefs } from "@/lib/live-activities";
-import type { LiveKind } from "@modules/live-activity";
+import { appLockEnabled, biometricLabel, setAppLock } from "@/lib/app-lock";
 import { colors } from "@/lib/theme";
 import { useToast } from "@/lib/toast-context";
 import { useVoice } from "@/lib/voice/voice-context";
@@ -91,13 +90,10 @@ export default function SettingsScreen() {
   const [calendarConnected, setCalendarConnected] = useState(false);
   const [calendarBusy, setCalendarBusy] = useState(false);
   const [callsEnabled, setCallsEnabled] = useState(() => getPref(PREFS.callsEnabled) !== "0");
+  const [appLock, setAppLockState] = useState(appLockEnabled);
+  // undefined while checking; null when the phone has no biometrics set up
+  const [lockLabel, setLockLabel] = useState<string | null | undefined>(undefined);
   const [cancelling, setCancelling] = useState(false);
-  const [live, setLive] = useState<Record<LiveKind, boolean>>(() => ({
-    focus: liveKindEnabled("focus"),
-    reminder: liveKindEnabled("reminder"),
-    block: liveKindEnabled("block"),
-    call: liveKindEnabled("call"),
-  }));
 
   const deviceTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -122,6 +118,7 @@ export default function SettingsScreen() {
       if (data?.daily && data?.monthly) setUsage(data as TokenUsage);
     }).catch(() => {});
     subscriptionPlans.getAll().then((res) => setPlans((res.data as { data?: Plan[] } | null)?.data ?? [])).catch(() => {});
+    void biometricLabel().then(setLockLabel);
     const sub = AppState.addEventListener("change", (s) => { if (s === "active") checkCalendar(); });
     return () => sub.remove();
   }, [loadProfile, checkCalendar]);
@@ -153,17 +150,8 @@ export default function SettingsScreen() {
     }
   }
 
-  const LIVE_PREF: Record<LiveKind, string> = {
-    focus: PREFS.liveFocus,
-    reminder: PREFS.liveReminder,
-    block: PREFS.liveBlock,
-    call: PREFS.liveCall,
-  };
-
-  function toggleLive(kind: LiveKind, on: boolean) {
-    setLive((prev) => ({ ...prev, [kind]: on }));
-    setPref(LIVE_PREF[kind], on ? "1" : "0");
-    refreshLiveActivityPrefs();
+  async function toggleAppLock(on: boolean) {
+    if (await setAppLock(on)) setAppLockState(on);
   }
 
   function toggleCalls(on: boolean) {
@@ -278,21 +266,24 @@ export default function SettingsScreen() {
           <Button title={pwSaving ? "Saving…" : "Change password"} variant="tonal" onPress={changePassword} loading={pwSaving} disabled={!currentPassword || newPassword.length < 8} />
         </Section>
 
+        <Section title="Security">
+          <Row
+            title="App lock"
+            sub={
+              lockLabel === null
+                ? "Set up Face ID, Touch ID or a fingerprint in your phone's settings to use App lock."
+                : `Require ${lockLabel ?? "biometrics"} to open Nudge Buddy. Your phone's passcode works as a backup.`
+            }
+            right={<Toggle value={appLock} onChange={(v) => void toggleAppLock(v)} disabled={lockLabel === null && !appLock} />}
+          />
+        </Section>
+
         <Section title="Calls">
           <Row
             title="Let Nudge Buddy call me"
             sub="When a reminder is due and the app is closed, your buddy rings you like a phone call so you can talk it through."
             right={<Toggle value={callsEnabled} onChange={toggleCalls} />}
           />
-        </Section>
-
-        <Section title={Platform.OS === "ios" ? "Dynamic Island & lock screen" : "Live status notifications"}>
-          <Row title="Focus timer" sub="Phase and countdown, even with the app closed" right={<Toggle value={live.focus} onChange={(v) => toggleLive("focus", v)} />} />
-          <Row title="Reminders" sub="Counts down from an hour before, then alerts" right={<Toggle value={live.reminder} onChange={(v) => toggleLive("reminder", v)} />} />
-          <Row title="Workday block" sub="Current block and time left" right={<Toggle value={live.block} onChange={(v) => toggleLive("block", v)} />} />
-          {Platform.OS === "ios" ? (
-            <Row title="Calls" sub="Call status and duration" right={<Toggle value={live.call} onChange={(v) => toggleLive("call", v)} />} />
-          ) : null}
         </Section>
 
         <Section title="AI voice">

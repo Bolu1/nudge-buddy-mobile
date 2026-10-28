@@ -4,9 +4,6 @@ import LiveActivity, { type LiveKind, type LiveState } from "@modules/live-activ
 import VoiceEngine from "@modules/voice-engine";
 import { push as pushApi, reminders as remindersApi } from "./api";
 import { onChange } from "./events";
-import { getPref } from "./storage";
-import { PREFS } from "./prefs";
-import { setBackgroundKeepAlive } from "./sounds";
 import { useActiveFocus, type ActiveFocusSession } from "./use-active-focus";
 import { useCurrentBlock, type CurrentBlock } from "./use-current-block";
 import { useVoice } from "./voice/voice-context";
@@ -16,24 +13,12 @@ import { useWs } from "./ws-context";
 // on Android, ongoing notifications with a live timer (Live Update chips on 16+):
 // the focus timer, the next reminder, the current workday block and live
 // buddy calls. Timers are rendered by the system from the end/start dates,
-// so they keep ticking with the app closed. Phase changes need either the
-// backend (via the activities' push tokens) or the app awake: during a focus
-// session the app keeps itself running in the background (see below).
+// so they keep ticking with the app closed; phase changes while the app is
+// suspended come from the backend via the activities' push tokens.
 
 const REMINDER_LOOKAHEAD_MS = 60 * 60 * 1000;  // show a reminder from an hour before it's due
 const FIRED_REMINDER_LINGER_S = 10 * 60;       // keep a fired reminder on the lock screen this long
 const REMINDER_POLL_MS = 5 * 60 * 1000;
-
-const PREF_FOR: Record<LiveKind, string> = {
-  focus: PREFS.liveFocus,
-  reminder: PREFS.liveReminder,
-  block: PREFS.liveBlock,
-  call: PREFS.liveCall,
-};
-
-export function liveKindEnabled(kind: LiveKind): boolean {
-  return getPref(PREF_FOR[kind]) !== "0";
-}
 
 const epoch = (iso: string | Date) => new Date(iso).getTime() / 1000;
 
@@ -51,7 +36,7 @@ function slot(kind: LiveKind): Slot {
 /** Android: the call already has its foreground-service notification */
 function syncAndroid(kind: LiveKind, state: LiveState | null) {
   if (kind === "call") return;
-  if (state && liveKindEnabled(kind)) {
+  if (state) {
     const text = state.status ? `${state.status} · ${state.subtitle}` : state.subtitle;
     VoiceEngine.showLiveUpdate(kind, state.title, text, state.startEpoch ?? null, state.endEpoch ?? null, !!state.paused, state.colorHex);
   } else {
@@ -71,25 +56,24 @@ function sync(kind: LiveKind, state: LiveState | null, opts: { alert?: { title: 
   if (!LiveActivity) return;
   s.busy = s.busy.then(async () => {
     try {
-      const wanted = state && liveKindEnabled(kind) ? state : null;
-      if (!wanted) {
+      if (!state) {
         if (s.id) await LiveActivity!.end(s.id, null, null);
         s.id = null;
         s.json = "";
         return;
       }
-      const json = JSON.stringify(wanted);
+      const json = JSON.stringify(state);
       if (s.id && json === s.json && !opts.alert) return;
       if (s.id) {
-        await LiveActivity!.update(s.id, wanted, opts.alert ?? null, null);
+        await LiveActivity!.update(s.id, state, opts.alert ?? null, null);
         if (opts.dismissAfter != null) {
-          await LiveActivity!.end(s.id, wanted, opts.dismissAfter);
+          await LiveActivity!.end(s.id, state, opts.dismissAfter);
           s.id = null;
           s.json = "";
           return;
         }
       } else {
-        s.id = await LiveActivity!.start(kind, wanted, null);
+        s.id = await LiveActivity!.start(kind, state, null);
       }
       s.json = json;
     } catch (e) {
@@ -190,14 +174,6 @@ export function useLiveActivities() {
   );
   useEffect(() => { if (enabled) sync("focus", focus); }, [enabled, focus]);
 
-  // Stay awake in the background while the timer runs, so the phase change is
-  // announced and reaches the Dynamic Island. A call keeps the app awake itself.
-  const keepAwake = Platform.OS === "ios" && !!activeFocus && !paused && !micActive;
-  useEffect(() => {
-    setBackgroundKeepAlive(keepAwake);
-    return () => setBackgroundKeepAlive(false);
-  }, [keepAwake]);
-
   // Current workday block
   const block = useMemo(() => (currentBlock ? blockState(currentBlock) : null), [currentBlock]);
   useEffect(() => { if (enabled) sync("block", block); }, [enabled, block]);
@@ -249,9 +225,4 @@ export function useLiveActivities() {
     });
     return () => { cancelled = true; clearInterval(id); offTasks(); offWs(); };
   }, [enabled, addListener]);
-}
-
-/** Re-apply the per-kind toggles (Settings) right away */
-export function refreshLiveActivityPrefs() {
-  for (const [kind, s] of slots) sync(kind, s.desired);
 }

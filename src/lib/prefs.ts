@@ -7,11 +7,8 @@ export const PREFS = {
   introSeen: "nudge:introSeen",
   callsEnabled: "nudge:callsEnabled",
   tutorialSeen: "nudge:tutorialSeen",
-  // Dynamic Island / lock screen (iOS Live Activities), per kind — "0" = off
-  liveFocus: "nudge:live:focus",
-  liveReminder: "nudge:live:reminder",
-  liveBlock: "nudge:live:block",
-  liveCall: "nudge:live:call",
+  // Face ID / fingerprint to open the app — "1" = on
+  appLock: "nudge:appLock",
 } as const;
 
 export const PREF_KEYS = Object.values(PREFS);

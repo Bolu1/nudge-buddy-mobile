@@ -74,6 +74,13 @@ export async function registerForPush(): Promise<void> {
         importance: Notifications.AndroidImportance.HIGH,
         lightColor: "#8da38a",
       });
+      // Android plays the channel's sound, so the phase chime gets its own channel
+      await Notifications.setNotificationChannelAsync("focus", {
+        name: "Focus timer",
+        importance: Notifications.AndroidImportance.HIGH,
+        sound: "phase_chime.wav",
+        lightColor: "#8da38a",
+      });
     }
     let { status } = await Notifications.getPermissionsAsync();
     if (status !== "granted") ({ status } = await Notifications.requestPermissionsAsync());

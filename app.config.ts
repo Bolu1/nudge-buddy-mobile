@@ -1,3 +1,5 @@
+/// <reference types="node" />
+import { existsSync } from "node:fs";
 import type { ConfigContext, ExpoConfig } from "expo/config";
 import { withEntitlementsPlist, type ConfigPlugin } from "expo/config-plugins";
 
@@ -7,6 +9,11 @@ const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 const googleIosUrlScheme = googleIosClientId
   ? `com.googleusercontent.apps.${googleIosClientId.replace(".apps.googleusercontent.com", "")}`
   : undefined;
+
+// Android push (FCM): google-services.json from the Firebase console, in the
+// project root unless GOOGLE_SERVICES_JSON points elsewhere
+const googleServicesFile =
+  process.env.GOOGLE_SERVICES_JSON ?? (existsSync("./google-services.json") ? "./google-services.json" : undefined);
 
 // Free Apple "Personal Team" signing can't include push notifications.
 // IOS_PUSH=off builds without them (VoIP calls and remote pushes then don't
@@ -30,9 +37,9 @@ const appConfig = ({ config }: ConfigContext): ExpoConfig => ({
   userInterfaceStyle: "dark",
   backgroundColor: "#151311",
   ios: {
-    bundleIdentifier: process.env.IOS_BUNDLE_ID ?? "com.nudgebuddy.app",
+    bundleIdentifier: process.env.IOS_BUNDLE_ID ?? "com.boluadetifa.nudgebuddy",
     // Needed to sign the Live Activity widget extension
-    appleTeamId: process.env.APPLE_TEAM_ID,
+    appleTeamId: process.env.APPLE_TEAM_ID ?? "6PP44GSHNR",
     supportsTablet: false,
     infoPlist: {
       NSMicrophoneUsageDescription: "Nudge Buddy listens while you're on a call with it.",
@@ -52,7 +59,7 @@ const appConfig = ({ config }: ConfigContext): ExpoConfig => ({
       foregroundImage: "./assets/android-icon-foreground.png",
     },
     predictiveBackGestureEnabled: false,
-    googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? undefined,
+    googleServicesFile,
   },
   plugins: [
     // Builds targets/widget (the Live Activity extension) into the iOS project
@@ -76,7 +83,13 @@ const appConfig = ({ config }: ConfigContext): ExpoConfig => ({
       {
         color: "#8da38a",
         enableBackgroundRemoteNotifications: true,
+        // Focus phase notifications play the same chime as the app
+        sounds: ["./assets/sounds/phase_chime.wav"],
       },
+    ],
+    [
+      "expo-local-authentication",
+      { faceIDPermission: "Nudge Buddy uses Face ID to unlock the app when you turn on App lock." },
     ],
     [
       "expo-splash-screen",
@@ -102,7 +115,8 @@ const appConfig = ({ config }: ConfigContext): ExpoConfig => ({
     typedRoutes: true,
   },
   extra: {
-    eas: process.env.EAS_PROJECT_ID ? { projectId: process.env.EAS_PROJECT_ID } : undefined,
+    // Expo project (push tokens, EAS) — not a secret
+    eas: { projectId: process.env.EAS_PROJECT_ID ?? "18709840-f831-4e60-9644-e94177c70d82" },
   },
 });
 
