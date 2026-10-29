@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Alert, KeyboardAvoidingView, Platform, RefreshControl, ScrollView, Text, View } from "react-native";
+import { Alert, KeyboardAvoidingView, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "@/components/ui/SafeArea";
 import { router, useLocalSearchParams } from "expo-router";
 import { flashcards as flashcardsApi } from "@/lib/api";
@@ -209,7 +209,7 @@ export default function CollectionScreen() {
       {loading ? (
         <Spinner />
       ) : (
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} className="flex-1">
+        <KeyboardAvoidingView behavior="padding" className="flex-1">
           <ScrollView
             contentContainerClassName="p-4 gap-8 pb-32"
             keyboardShouldPersistTaps="handled"

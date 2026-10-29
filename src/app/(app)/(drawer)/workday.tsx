@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Alert, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { Alert, KeyboardAvoidingView, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "@/components/ui/SafeArea";
 import { workday as workdayApi, tasks as tasksApi } from "@/lib/api";
 import { emitChange, onChange } from "@/lib/events";
@@ -299,6 +299,7 @@ export default function WorkdayScreen() {
           </View>
         }
       />
+      <KeyboardAvoidingView behavior="padding" className="flex-1">
       <ScrollView
         contentContainerClassName="p-4 gap-6 pb-32"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} tintColor={colors.primaryContainer} />}
@@ -411,6 +412,7 @@ export default function WorkdayScreen() {
           </View>
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
 
       <BlockSheet
         visible={blockSheet.open}

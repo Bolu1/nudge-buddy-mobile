@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { Alert, KeyboardAvoidingView, Modal, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "@/components/ui/SafeArea";
 import { notes as notesApi } from "@/lib/api";
 import { onChange } from "@/lib/events";
@@ -179,7 +179,7 @@ export default function NotesScreen() {
 
       <Modal visible={!!openNote} animationType="slide" presentationStyle="pageSheet" onRequestClose={close}>
         <SafeAreaView className="flex-1 bg-bg" edges={["top", "bottom"]}>
-          <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} className="flex-1">
+          <KeyboardAvoidingView behavior="padding" className="flex-1">
             <View className="flex-row items-center justify-between px-3 py-2 border-b border-divider">
               <Pressable onPress={close} className="flex-row items-center gap-1 px-2 py-1.5" hitSlop={8}>
                 <Icon name="chevron-left" size={16} color={colors.outline} />

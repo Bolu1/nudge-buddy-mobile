@@ -71,8 +71,11 @@ function Menu({ state, navigation }: DrawerContentComponentProps) {
   const { activeFocus, seconds, paused } = useActiveFocus();
   const current = state.routes[state.index]?.name;
 
+  // Always close explicitly: navigating to the screen that's already open
+  // changes nothing, so the drawer would otherwise stay open
   function go(name: string) {
-    navigation.navigate(name);
+    if (name !== current) navigation.navigate(name);
+    navigation.closeDrawer();
   }
 
   function goOutside(path: "/boards/invites" | "/zen") {
@@ -89,9 +92,18 @@ function Menu({ state, navigation }: DrawerContentComponentProps) {
 
   return (
     <View className="flex-1 bg-surface-lowest" style={{ paddingTop: insets.top + 8, paddingBottom: Math.max(insets.bottom, 12) }}>
-      <View className="flex-row items-center gap-3 px-5 pb-5">
+      <View className="flex-row items-center gap-3 pl-5 pr-3 pb-5">
         <Mascot size={34} />
-        <Text className="text-on-surface text-lg font-semibold tracking-tight">Nudge Buddy</Text>
+        <Text className="text-on-surface text-lg font-semibold tracking-tight flex-1">Nudge Buddy</Text>
+        {/* Some Android phones don't pass taps to the backdrop, so there's always a visible way out */}
+        <Pressable
+          onPress={() => navigation.closeDrawer()}
+          hitSlop={8}
+          accessibilityLabel="Close menu"
+          className="w-9 h-9 rounded-full items-center justify-center active:bg-surface-high"
+        >
+          <Icon name="x" size={20} color={colors.onSurfaceVariant} />
+        </Pressable>
       </View>
 
       {micActive ? (

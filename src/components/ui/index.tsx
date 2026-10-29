@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -386,7 +385,7 @@ export function Sheet({
     <Modal visible transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
       {/* Gestures inside a Modal need their own root (Android) */}
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} className="flex-1 justify-end">
+        <KeyboardAvoidingView behavior="padding" className="flex-1 justify-end">
           <Animated.View style={[StyleSheet.absoluteFill, backdropStyle]}>
             <Pressable className="flex-1 bg-black/50" onPress={onClose} accessibilityLabel="Close" />
           </Animated.View>

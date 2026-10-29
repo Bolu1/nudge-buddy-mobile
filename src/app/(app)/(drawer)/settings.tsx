@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Alert, AppState, Platform, Pressable, ScrollView, Text, View } from "react-native";
+import { Alert, AppState, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "@/components/ui/SafeArea";
 import * as WebBrowser from "expo-web-browser";
 import { account, calendar, payment, subscriptionPlans } from "@/lib/api";
@@ -241,6 +241,7 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView edges={["top"]} className="flex-1 bg-bg">
       <ScreenHeader title="Settings" />
+      <KeyboardAvoidingView behavior="padding" className="flex-1">
       <ScrollView contentContainerClassName="p-4 gap-4 pb-32" keyboardShouldPersistTaps="handled">
         <Section title="Profile">
           <View className="flex-row gap-3">
@@ -401,6 +402,7 @@ export default function SettingsScreen() {
 
         <Text className="text-outline-variant text-[11px] text-center">Nudge Buddy · {Platform.OS === "ios" ? "iOS" : "Android"}</Text>
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

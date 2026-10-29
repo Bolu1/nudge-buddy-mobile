@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from "react-native";
+import { KeyboardAvoidingView, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "@/components/ui/SafeArea";
 import { Mascot } from "./Mascot";
 
@@ -17,7 +17,7 @@ export function AuthShell({
 }) {
   return (
     <SafeAreaView className="flex-1 bg-bg">
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} className="flex-1">
+      <KeyboardAvoidingView behavior="padding" className="flex-1">
         <ScrollView contentContainerClassName="grow justify-center px-5 py-10" keyboardShouldPersistTaps="handled">
           <View className="flex-row items-center gap-3 mb-8 justify-center">
             <Mascot size={44} />

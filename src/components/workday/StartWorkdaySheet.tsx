@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, View } from "react-native";
+import { Alert, KeyboardAvoidingView, Modal, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "@/components/ui/SafeArea";
 import { workday as workdayApi } from "@/lib/api";
 import { colors } from "@/lib/theme";
@@ -208,7 +208,7 @@ function StartWorkdayForm({
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <SafeAreaView className="flex-1 bg-bg" edges={["top", "bottom"]}>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} className="flex-1">
+        <KeyboardAvoidingView behavior="padding" className="flex-1">
           <View className="flex-row items-center justify-between px-4 py-3 border-b border-divider">
             <IconButton name="x" onPress={onClose} accessibilityLabel="Close" />
             <View className="items-center">

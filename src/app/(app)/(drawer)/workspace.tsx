@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "@/components/ui/SafeArea";
 import { router } from "expo-router";
 import { tasks as tasksApi } from "@/lib/api";
@@ -139,7 +139,7 @@ export default function WorkspaceScreen() {
 
   return (
     <SafeAreaView edges={["top"]} className="flex-1 bg-bg">
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} className="flex-1" keyboardVerticalOffset={0}>
+      <KeyboardAvoidingView behavior="padding" className="flex-1" keyboardVerticalOffset={0}>
         {/* Header */}
         <View className="flex-row items-center justify-between px-2 py-2">
           <View className="flex-row items-center gap-2">
