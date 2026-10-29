@@ -11,6 +11,10 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# Keep the Mac awake until this script exits: sleeping stalls the archive and
+# drops the upload. The screen can still turn off; closing the lid still sleeps.
+command -v caffeinate >/dev/null && caffeinate -i -s -w $$ &
+
 UPLOAD=1
 [ "${1:-}" = "--no-upload" ] && UPLOAD=0
 
