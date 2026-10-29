@@ -1,7 +1,9 @@
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   ActivityIndicator,
+  Keyboard,
   KeyboardAvoidingView,
+  Platform,
   Modal,
   Pressable,
   ScrollView,
@@ -308,6 +310,17 @@ const SHEET_CLOSE_DISTANCE = 120;
 const SHEET_CLOSE_VELOCITY = 900;
 const SHEET_SPRING = { damping: 26, stiffness: 260 };
 
+function useKeyboardVisible() {
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    const ios = Platform.OS === "ios";
+    const show = Keyboard.addListener(ios ? "keyboardWillShow" : "keyboardDidShow", () => setShown(true));
+    const hide = Keyboard.addListener(ios ? "keyboardWillHide" : "keyboardDidHide", () => setShown(false));
+    return () => { show.remove(); hide.remove(); };
+  }, []);
+  return shown;
+}
+
 export function Sheet({
   visible,
   onClose,
@@ -329,6 +342,7 @@ export function Sheet({
 }) {
   const insets = useSafeAreaInsets();
   const { height: screenH } = useWindowDimensions();
+  const keyboardShown = useKeyboardVisible();
   // Stays mounted through the slide-out after the parent hides it
   const [mounted, setMounted] = useState(visible);
   if (visible && !mounted) setMounted(true);
@@ -390,14 +404,20 @@ export function Sheet({
     <Modal visible transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
       {/* Gestures inside a Modal need their own root (Android) */}
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <KeyboardAvoidingView behavior="padding" className="flex-1 justify-end">
+        {/* The panel shrinks to fit between the status bar and the keyboard, so a
+            tall sheet's title and newest messages never get pushed off screen */}
+        <KeyboardAvoidingView behavior="padding" className="flex-1 justify-end" style={{ paddingTop: insets.top + 8 }}>
           <Animated.View style={[StyleSheet.absoluteFill, backdropStyle]}>
             <Pressable className="flex-1 bg-black/50" onPress={onClose} accessibilityLabel="Close" />
           </Animated.View>
-          <Animated.View style={panelStyle}>
+          <Animated.View style={[panelStyle, { flexShrink: 1 }]}>
             <View
               className="bg-surface-low rounded-t-3xl border-t border-divider"
-              style={[{ paddingBottom: Math.max(insets.bottom, 12) }, tall ? { height: maxHeight } : { maxHeight }]}
+              style={[
+                // The keyboard covers the home indicator, so its inset isn't needed then
+                { paddingBottom: keyboardShown ? 12 : Math.max(insets.bottom, 12), flexShrink: 1 },
+                tall ? { height: maxHeight } : { maxHeight },
+              ]}
             >
               <GestureDetector gesture={headerPan}>
                 <View>
@@ -418,7 +438,8 @@ export function Sheet({
                 <ScrollView
                   ref={scrollRef}
                   className={tall ? "flex-1 px-5" : "grow-0 px-5"}
-                  contentContainerClassName="pb-4 gap-4"
+                  // A short chat sits just above the input, like a messages thread
+                  contentContainerClassName={stickToBottom ? "grow justify-end pb-4 gap-4" : "pb-4 gap-4"}
                   keyboardShouldPersistTaps="handled"
                   // No bounce at the top: pulling down there moves the sheet instead
                   bounces={false}
@@ -426,6 +447,7 @@ export function Sheet({
                   scrollEventThrottle={16}
                   onScroll={(e) => atTop.set(e.nativeEvent.contentOffset.y <= 0)}
                   onContentSizeChange={() => { if (stickToBottom) scrollRef.current?.scrollToEnd({ animated: true }); }}
+                  onLayout={() => { if (stickToBottom) scrollRef.current?.scrollToEnd({ animated: false }); }}
                 >
                   {children}
                 </ScrollView>
