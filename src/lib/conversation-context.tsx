@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { useWs, type WsMessage } from "./ws-context";
 import { useVoice, type TranscriptMeta } from "./voice/voice-context";
+import type { Cue } from "./voice/pcm";
 import { TASK_REFRESH_ACTIONS } from "./assistant-data";
 import { emitChange } from "./events";
 
@@ -20,6 +21,12 @@ export interface Message {
 
 // Reply types tied to a live turn; everything else with `speech` is a server push
 const CONVERSATIONAL_TYPES = new Set(["action_result", "not_actionable", "action_error", "error", "pong", "confirm_required"]);
+
+function focusChimeFor(msg: WsMessage): Cue {
+  if (msg.type === "pomodoro_complete") return "phaseChime";
+  const phase = (msg.phase as string | undefined) ?? (msg.currentPhase as string | undefined) ?? "";
+  return phase === "SHORT_BREAK" || phase === "LONG_BREAK" ? "breakChime" : "focusChime";
+}
 
 function fallbackSpeech(msg: WsMessage): string | undefined {
   switch (msg.type) {
@@ -161,8 +168,9 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
       if (!say) return;
       const focusChange = msg.type === "pomodoro_transition" || msg.type === "pomodoro_complete";
       pushMessage("assistant", say, focusChange ? "pomodoro_started" : msg.type);
-      // Focus phase changes get a chime first, so they don't start mid-thought
-      if (focusChange) announce(say);
+      // Focus phase changes get a chime first, so they don't start mid-thought —
+      // a different one for focus, break and the end, so the tone alone says which
+      if (focusChange) announce(say, focusChimeFor(msg));
       else speak(say);
     });
   }, [addListener, pushMessage, speak, announce, playMusic, stopMusic, settleReply]);

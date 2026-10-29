@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "267243874348",
+    "project_id": "nudge-buddy-d2e2e",
+    "storage_bucket": "nudge-buddy-d2e2e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:267243874348:android:d0d0f16fd466f465c38989",
+        "android_client_info": {
+          "package_name": "com.nudgebuddy.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCafkxWqywtiznTl522sYzxk9mr9sggK8w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

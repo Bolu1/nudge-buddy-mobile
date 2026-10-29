@@ -4,6 +4,7 @@ import { Link, router } from "expo-router";
 import { auth as authApi } from "@/lib/api";
 import { firstError } from "@/lib/auth-context";
 import { AuthShell } from "@/components/AuthShell";
+import { AppleSignInButton } from "@/components/AppleSignInButton";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { Button, ErrorBanner, Field, Label, PasswordField } from "@/components/ui";
 
@@ -58,6 +59,7 @@ export default function SignUpScreen() {
         </Text>
       }
     >
+      <AppleSignInButton onError={setError} />
       <GoogleSignInButton onError={setError} />
       <ErrorBanner message={error} />
       <View className="flex-row gap-3">

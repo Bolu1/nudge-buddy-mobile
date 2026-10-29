@@ -74,13 +74,21 @@ export async function registerForPush(): Promise<void> {
         importance: Notifications.AndroidImportance.HIGH,
         lightColor: "#8da38a",
       });
-      // Android plays the channel's sound, so the phase chime gets its own channel
-      await Notifications.setNotificationChannelAsync("focus", {
-        name: "Focus timer",
-        importance: Notifications.AndroidImportance.HIGH,
-        sound: "phase_chime.wav",
-        lightColor: "#8da38a",
-      });
+      // Android plays the channel's sound (fixed once created), so each focus
+      // chime gets its own channel
+      const focusChannels = [
+        ["focus_work", "Focus timer: back to focus", "focus_chime.wav"],
+        ["focus_break", "Focus timer: break", "break_chime.wav"],
+        ["focus", "Focus timer: session complete", "phase_chime.wav"],
+      ] as const;
+      for (const [id, name, sound] of focusChannels) {
+        await Notifications.setNotificationChannelAsync(id, {
+          name,
+          importance: Notifications.AndroidImportance.HIGH,
+          sound,
+          lightColor: "#8da38a",
+        });
+      }
     }
     let { status } = await Notifications.getPermissionsAsync();
     if (status !== "granted") ({ status } = await Notifications.requestPermissionsAsync());

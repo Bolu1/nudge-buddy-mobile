@@ -63,7 +63,7 @@ function cached(key: string, make: () => Uint8Array) {
   return v;
 }
 
-export type Cue = "mute" | "unmute" | "end" | "thinking" | "taskComplete" | "phaseChime" | "zenSwell";
+export type Cue = "mute" | "unmute" | "end" | "thinking" | "taskComplete" | "phaseChime" | "focusChime" | "breakChime" | "zenSwell";
 
 /**
  * Entering Zen: a warm Cmaj9 chord that swells in and fades away, with a bell
@@ -137,12 +137,28 @@ export function cuePcm(cue: Cue): Uint8Array {
           { at: 0, dur: 0.45, f0: 1046.5, peak: 0.11, partial: [2.76, 0.18] },
           { at: 0.09, dur: 0.7, f0: 1568, peak: 0.09, partial: [2.76, 0.18] },
         ]);
+      // Focus timer cues — each has its own shape so the phase is clear by ear:
+      // work goes ding-ding-up, breaks drift down, the end rises evenly.
       case "phaseChime":
-        // Three soft rising bells (G5 C6 E6) before a focus phase is announced
+        // Session complete: three soft rising bells (G5 C6 E6)
         return render([
           { at: 0, dur: 0.9, f0: 784, peak: 0.16, partial: [2.76, 0.15] },
           { at: 0.18, dur: 0.9, f0: 1046.5, peak: 0.14, partial: [2.76, 0.15] },
           { at: 0.36, dur: 1.2, f0: 1318.5, peak: 0.12, partial: [2.76, 0.15] },
+        ]);
+      case "focusChime":
+        // Back to focus: two quick bright bells, then a fifth up (C6 C6 G6)
+        return render([
+          { at: 0, dur: 0.35, f0: 1046.5, peak: 0.16, partial: [2.76, 0.2] },
+          { at: 0.13, dur: 0.35, f0: 1046.5, peak: 0.16, partial: [2.76, 0.2] },
+          { at: 0.3, dur: 1.0, f0: 1568, peak: 0.14, partial: [2.76, 0.2] },
+        ]);
+      case "breakChime":
+        // Break: three slow, mellow bells drifting down (E6 C6 G5)
+        return render([
+          { at: 0, dur: 1.3, f0: 1318.5, peak: 0.11, partial: [2, 0.08] },
+          { at: 0.32, dur: 1.3, f0: 1046.5, peak: 0.11, partial: [2, 0.08] },
+          { at: 0.64, dur: 1.7, f0: 784, peak: 0.12, partial: [2, 0.08] },
         ]);
     }
   });

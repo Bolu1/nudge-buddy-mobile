@@ -90,7 +90,7 @@ interface VoiceCtx {
   setMutedState: (muted: boolean) => void;
   speak: (text: string) => void;
   /** Chime, then speak — for announcements the user didn't ask for (focus phase changes) */
-  announce: (text: string) => void;
+  announce: (text: string, chime?: Cue) => void;
   stopSpeaking: () => void;
   nextTrack: () => void;
   stopMusic: () => void;
@@ -648,13 +648,13 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
     void runTtsQueue(gen);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const announce = useCallback((text: string) => {
+  const announce = useCallback((text: string, chime: Cue = "phaseChime") => {
     let chimeMs: number;
     if (engineRunningRef.current) {
-      playCue("phaseChime");
-      chimeMs = (cuePcm("phaseChime").length / BYTES_PER_SEC) * 1000;
+      playCue(chime);
+      chimeMs = (cuePcm(chime).length / BYTES_PER_SEC) * 1000;
     } else {
-      chimeMs = playCueSound("phaseChime");
+      chimeMs = playCueSound(chime);
     }
     setTimeout(() => speak(text), chimeMs + 150);
   }, [speak]);

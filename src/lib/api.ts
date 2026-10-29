@@ -110,6 +110,12 @@ export const auth = {
       body: JSON.stringify(body),
     }),
 
+  apple: (body: { identityToken: string; authorizationCode?: string; firstName?: string; lastName?: string }) =>
+    apiFetch("/auth/apple", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
   google: (body: { token: string }) =>
     apiFetch("/auth/google", {
       method: "POST",

@@ -1,4 +1,4 @@
-import { forwardRef, useState, type ReactNode } from "react";
+import { forwardRef, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -6,11 +6,16 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   View,
+  useWindowDimensions,
   type TextInputProps,
 } from "react-native";
+import { Gesture, GestureDetector, GestureHandlerRootView } from "react-native-gesture-handler";
+import Animated, { Easing, Extrapolation, interpolate, useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
+import { scheduleOnRN } from "react-native-worklets";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/lib/theme";
 import { Icon, type IconName } from "./Icon";
@@ -294,47 +299,138 @@ export function SectionTitle({ children, right }: { children: ReactNode; right?:
 
 // ── Bottom sheet (modal) ─────────────────────────────────────────────────────
 
+// Drag past this far, or flick faster than this, and the sheet closes
+const SHEET_CLOSE_DISTANCE = 120;
+const SHEET_CLOSE_VELOCITY = 900;
+const SHEET_SPRING = { damping: 26, stiffness: 260 };
+
 export function Sheet({
   visible,
   onClose,
   title,
   children,
   footer,
+  tall,
+  stickToBottom,
 }: {
   visible: boolean;
   onClose: () => void;
   title?: string;
   children: ReactNode;
   footer?: ReactNode;
+  /** Fixed at the full sheet height instead of fitting the content (e.g. a chat) */
+  tall?: boolean;
+  /** Keep the newest content in view as it grows (e.g. a chat) */
+  stickToBottom?: boolean;
 }) {
   const insets = useSafeAreaInsets();
+  const { height: screenH } = useWindowDimensions();
+  // Stays mounted through the slide-out after the parent hides it
+  const [mounted, setMounted] = useState(visible);
+  if (visible && !mounted) setMounted(true);
+
+  const y = useSharedValue(screenH);
+  const atTop = useSharedValue(true);
+  const dragging = useSharedValue(false);
+  const scrollRef = useRef<ScrollView>(null);
+  const onCloseRef = useRef(onClose);
+  const visibleRef = useRef(visible);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+    visibleRef.current = visible;
+  });
+
+  useEffect(() => {
+    if (!mounted) return;
+    if (visible) y.set(withTiming(0, { duration: 260, easing: Easing.out(Easing.cubic) }));
+    else y.set(withTiming(screenH, { duration: 220 }, (done) => { if (done) scheduleOnRN(setMounted, false); }));
+  }, [visible, mounted, screenH, y]);
+
+  // Swiped away: ask the parent to close; if it doesn't (e.g. mid-save), settle back
+  const requestClose = useCallback(() => {
+    onCloseRef.current();
+    setTimeout(() => { if (visibleRef.current) y.set(withSpring(0, SHEET_SPRING)); }, 300);
+  }, [y]);
+
+  // The handle and title always drag the sheet; the content only when it's
+  // scrolled to the top (otherwise the drag scrolls it)
+  const makePan = useCallback((fromContent: boolean) => Gesture.Pan()
+    .activeOffsetY([-10, 10])
+    .failOffsetX([-24, 24])
+    .onStart(() => { dragging.value = !fromContent || atTop.value; })
+    .onUpdate((e) => { if (dragging.value) y.value = Math.max(0, e.translationY); })
+    .onEnd((e) => {
+      if (!dragging.value) return;
+      if (e.translationY > SHEET_CLOSE_DISTANCE || e.velocityY > SHEET_CLOSE_VELOCITY) {
+        y.value = withTiming(screenH, { duration: 200 });
+        scheduleOnRN(requestClose);
+      } else {
+        y.value = withSpring(0, SHEET_SPRING);
+      }
+    }), [atTop, dragging, requestClose, screenH, y]);
+  // The compiler lint reads the builder's callbacks as running during render;
+  // gesture-handler only calls them on touch.
+  /* eslint-disable react-hooks/refs */
+  const headerPan = useMemo(() => makePan(false), [makePan]);
+  // Runs alongside the content's own scrolling
+  const contentGesture = useMemo(() => Gesture.Simultaneous(makePan(true), Gesture.Native()), [makePan]);
+  /* eslint-enable react-hooks/refs */
+
+  const panelStyle = useAnimatedStyle(() => ({ transform: [{ translateY: y.value }] }));
+  const backdropStyle = useAnimatedStyle(() => ({ opacity: interpolate(y.value, [0, screenH * 0.6], [1, 0], Extrapolation.CLAMP) }));
+
+  if (!mounted) return null;
+  const maxHeight = screenH * 0.88;
+
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} className="flex-1">
-        <Pressable className="flex-1 bg-black/50" onPress={onClose} />
-        <View
-          className="bg-surface-low rounded-t-3xl border-t border-divider max-h-[88%]"
-          style={{ paddingBottom: Math.max(insets.bottom, 12) }}
-        >
-          <View className="items-center pt-2.5 pb-1">
-            <View className="w-10 h-1 rounded-full bg-outline-variant" />
-          </View>
-          {title ? (
-            <View className="flex-row items-center justify-between px-5 pt-2 pb-3">
-              <Text className="text-on-surface font-semibold text-base">{title}</Text>
-              <IconButton name="x" onPress={onClose} accessibilityLabel="Close" />
+    <Modal visible transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
+      {/* Gestures inside a Modal need their own root (Android) */}
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} className="flex-1 justify-end">
+          <Animated.View style={[StyleSheet.absoluteFill, backdropStyle]}>
+            <Pressable className="flex-1 bg-black/50" onPress={onClose} accessibilityLabel="Close" />
+          </Animated.View>
+          <Animated.View style={panelStyle}>
+            <View
+              className="bg-surface-low rounded-t-3xl border-t border-divider"
+              style={[{ paddingBottom: Math.max(insets.bottom, 12) }, tall ? { height: maxHeight } : { maxHeight }]}
+            >
+              <GestureDetector gesture={headerPan}>
+                <View>
+                  <View className="items-center pt-2.5 pb-1">
+                    <View className="w-10 h-1 rounded-full bg-outline-variant" />
+                  </View>
+                  {title ? (
+                    <View className="flex-row items-center justify-between px-5 pt-2 pb-3">
+                      <Text className="text-on-surface font-semibold text-base">{title}</Text>
+                      <IconButton name="x" onPress={onClose} accessibilityLabel="Close" />
+                    </View>
+                  ) : (
+                    <View className="h-3" />
+                  )}
+                </View>
+              </GestureDetector>
+              <GestureDetector gesture={contentGesture}>
+                <ScrollView
+                  ref={scrollRef}
+                  className={tall ? "flex-1 px-5" : "grow-0 px-5"}
+                  contentContainerClassName="pb-4 gap-4"
+                  keyboardShouldPersistTaps="handled"
+                  // No bounce at the top: pulling down there moves the sheet instead
+                  bounces={false}
+                  overScrollMode="never"
+                  scrollEventThrottle={16}
+                  onScroll={(e) => atTop.set(e.nativeEvent.contentOffset.y <= 0)}
+                  onContentSizeChange={() => { if (stickToBottom) scrollRef.current?.scrollToEnd({ animated: true }); }}
+                >
+                  {children}
+                </ScrollView>
+              </GestureDetector>
+              {footer ? <View className="px-5 pt-3 border-t border-divider">{footer}</View> : null}
             </View>
-          ) : null}
-          <ScrollView
-            className="px-5"
-            contentContainerClassName="pb-4 gap-4"
-            keyboardShouldPersistTaps="handled"
-          >
-            {children}
-          </ScrollView>
-          {footer ? <View className="px-5 pt-3 border-t border-divider">{footer}</View> : null}
-        </View>
-      </KeyboardAvoidingView>
+          </Animated.View>
+        </KeyboardAvoidingView>
+      </GestureHandlerRootView>
     </Modal>
   );
 }

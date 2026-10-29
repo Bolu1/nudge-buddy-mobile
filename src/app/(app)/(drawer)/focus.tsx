@@ -341,7 +341,7 @@ export default function FocusScreen() {
             <Text className="text-outline-variant text-sm">No sessions yet.</Text>
           ) : (
             <View className="gap-2">
-              {history.slice(0, 10).map((h) => (
+              {history.map((h) => (
                 <View key={h.id} className="flex-row items-center justify-between bg-surface-low border border-divider rounded-xl px-4 py-3">
                   <View>
                     <Text className="text-on-surface-variant text-sm">{h.config.pomodoroMinutes} min · {h.currentCycle}/{h.totalCycles} cycles</Text>

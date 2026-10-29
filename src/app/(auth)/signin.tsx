@@ -5,6 +5,7 @@ import * as Device from "expo-device";
 import { auth as authApi } from "@/lib/api";
 import { extractTokens, firstError, useAuth } from "@/lib/auth-context";
 import { AuthShell } from "@/components/AuthShell";
+import { AppleSignInButton } from "@/components/AppleSignInButton";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { Button, ErrorBanner, Field, Label, PasswordField } from "@/components/ui";
 
@@ -53,6 +54,7 @@ export default function SignInScreen() {
         </Text>
       }
     >
+      <AppleSignInButton onError={setError} />
       <GoogleSignInButton onError={setError} />
       <ErrorBanner message={error} />
       <View>

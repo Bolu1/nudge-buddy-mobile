@@ -43,6 +43,8 @@ const appConfig = ({ config }: ConfigContext): ExpoConfig => ({
     // Needed to sign the Live Activity widget extension
     appleTeamId: process.env.APPLE_TEAM_ID ?? "6PP44GSHNR",
     supportsTablet: false,
+    // Sign in with Apple entitlement (App Store requires it alongside Google sign-in)
+    usesAppleSignIn: true,
     infoPlist: {
       NSMicrophoneUsageDescription: "Nudge Buddy listens while you're on a call with it.",
       // audio: keep talking with the screen off / app in background
@@ -83,10 +85,13 @@ const appConfig = ({ config }: ConfigContext): ExpoConfig => ({
     [
       "expo-notifications",
       {
+        // Android status-bar icon: white on transparent (Android uses only the alpha)
+        icon: "./assets/notification-icon.png",
         color: "#8da38a",
         enableBackgroundRemoteNotifications: true,
-        // Focus phase notifications play the same chime as the app
-        sounds: ["./assets/sounds/phase_chime.wav"],
+        // Focus timer notifications play the same chimes as the app: back to
+        // focus, break, session complete
+        sounds: ["./assets/sounds/focus_chime.wav", "./assets/sounds/break_chime.wav", "./assets/sounds/phase_chime.wav"],
       },
     ],
     [

@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "@/components/ui/SafeArea";
 import { router } from "expo-router";
 import { tasks as tasksApi } from "@/lib/api";
@@ -43,7 +43,6 @@ export default function WorkspaceScreen() {
   const [showHelp, setShowHelp] = useState(false);
   const [helpGlow, setHelpGlow] = useState(false);
   const [starting, setStarting] = useState(false);
-  const transcriptRef = useRef<ScrollView>(null);
 
   const loadChips = useCallback(async () => {
     try {
@@ -88,9 +87,35 @@ export default function WorkspaceScreen() {
     }
   }
 
+  // Typed requests open the chat, so the reply shows up right there
   function submit(text = input) {
-    if (sendUtterance(text)) setInput("");
+    if (!sendUtterance(text)) return;
+    setInput("");
+    setShowTranscript(true);
   }
+
+  const composer = (
+    <View className="flex-row items-center bg-surface-low border border-divider rounded-2xl pl-4 pr-1.5">
+      <TextInput
+        value={input}
+        onChangeText={setInput}
+        placeholder={processing ? "Processing…" : status !== "open" ? "Connecting…" : "Ask anything…"}
+        placeholderTextColor={colors.outlineVariant}
+        editable={!processing}
+        returnKeyType="send"
+        onSubmitEditing={() => submit()}
+        className="flex-1 text-on-surface text-sm py-3.5"
+      />
+      <Pressable
+        onPress={() => submit()}
+        disabled={!input.trim() || processing}
+        accessibilityLabel="Send"
+        className={`w-9 h-9 rounded-full items-center justify-center ${input.trim() && !processing ? "bg-primary-container" : "bg-surface-high"}`}
+      >
+        <Icon name="send" size={15} color={input.trim() && !processing ? colors.onPrimary : colors.outlineVariant} strokeWidth={2} />
+      </Pressable>
+    </View>
+  );
 
   const orbState: VoiceOrbState =
     micActive && !muted && userSpeaking ? "hearing"
@@ -243,51 +268,37 @@ export default function WorkspaceScreen() {
         </ScrollView>
 
         {/* Input */}
-        <View className="px-4 pb-3 pt-2 border-t border-divider bg-bg">
-          <View className="flex-row items-center bg-surface-low border border-divider rounded-2xl pl-4 pr-1.5">
-            <TextInput
-              value={input}
-              onChangeText={setInput}
-              placeholder={processing ? "Processing…" : status !== "open" ? "Connecting…" : "Ask anything…"}
-              placeholderTextColor={colors.outlineVariant}
-              editable={!processing}
-              returnKeyType="send"
-              onSubmitEditing={() => submit()}
-              className="flex-1 text-on-surface text-sm py-3.5"
-            />
-            <Pressable
-              onPress={() => submit()}
-              disabled={!input.trim() || processing}
-              accessibilityLabel="Send"
-              className={`w-9 h-9 rounded-full items-center justify-center ${input.trim() && !processing ? "bg-primary-container" : "bg-surface-high"}`}
-            >
-              <Icon name="send" size={15} color={input.trim() && !processing ? colors.onPrimary : colors.outlineVariant} strokeWidth={2} />
-            </Pressable>
-          </View>
-        </View>
+        <View className="px-4 pb-3 pt-2 border-t border-divider bg-bg">{composer}</View>
       </KeyboardAvoidingView>
 
-      {/* Transcript */}
-      <Sheet visible={showTranscript} onClose={() => setShowTranscript(false)} title="Conversation">
-        <ScrollView ref={transcriptRef} onContentSizeChange={() => transcriptRef.current?.scrollToEnd({ animated: false })}>
-          <View className="gap-3">
-            {messages.map((m) => (
-              <View key={m.id} className={`max-w-[85%] ${m.role === "user" ? "self-end items-end" : "self-start"}`}>
-                {m.action && ACTION_LABELS[m.action] ? (
-                  <Text className="text-primary-container text-[10px] font-medium tracking-widest uppercase mb-1">{ACTION_LABELS[m.action]}</Text>
-                ) : null}
-                <View
-                  className={`rounded-2xl px-3.5 py-2.5 ${
-                    m.role === "user" ? "bg-on-primary-container" : m.role === "error" ? "bg-error-container/30 border border-error/30" : "bg-surface-high"
-                  }`}
-                >
-                  <Text className={`text-sm leading-5 ${m.role === "user" ? "text-primary" : m.role === "error" ? "text-error" : "text-on-surface"}`}>{m.text}</Text>
-                </View>
-                <Text className="text-outline-variant text-[10px] mt-1">{m.time}</Text>
+      {/* Chat: the conversation so far, the reply as it arrives, and a box to keep going */}
+      <Sheet visible={showTranscript} onClose={() => setShowTranscript(false)} title="Chat" tall stickToBottom footer={composer}>
+        {messages.length === 0 && !processing ? (
+          <Text className="text-outline text-sm text-center py-8">Ask anything, or tap the orb to talk.</Text>
+        ) : null}
+        <View className="gap-3">
+          {messages.map((m) => (
+            <View key={m.id} className={`max-w-[85%] ${m.role === "user" ? "self-end items-end" : "self-start"}`}>
+              {m.action && ACTION_LABELS[m.action] ? (
+                <Text className="text-primary-container text-[10px] font-medium tracking-widest uppercase mb-1">{ACTION_LABELS[m.action]}</Text>
+              ) : null}
+              <View
+                className={`rounded-2xl px-3.5 py-2.5 ${
+                  m.role === "user" ? "bg-on-primary-container" : m.role === "error" ? "bg-error-container/30 border border-error/30" : "bg-surface-high"
+                }`}
+              >
+                <Text className={`text-sm leading-5 ${m.role === "user" ? "text-primary" : m.role === "error" ? "text-error" : "text-on-surface"}`}>{m.text}</Text>
               </View>
-            ))}
-          </View>
-        </ScrollView>
+              <Text className="text-outline-variant text-[10px] mt-1">{m.time}</Text>
+            </View>
+          ))}
+          {processing ? (
+            <View className="self-start flex-row items-center gap-2 rounded-2xl px-3.5 py-2.5 bg-surface-high">
+              <ActivityIndicator size="small" color={colors.outline} />
+              <Text className="text-outline text-sm">Thinking…</Text>
+            </View>
+          ) : null}
+        </View>
       </Sheet>
 
       {/* Help */}
@@ -301,7 +312,9 @@ export default function WorkspaceScreen() {
                 key={cmd}
                 onPress={() => {
                   setShowHelp(false);
-                  if (!micActive) submit(cmd);
+                  if (micActive || !sendUtterance(cmd)) return;
+                  // iOS shows one sheet at a time: open the chat once this one has slid away
+                  setTimeout(() => setShowTranscript(true), 350);
                 }}
                 className="px-3 py-2 rounded-xl bg-surface active:bg-surface-high"
               >

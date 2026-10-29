@@ -4,15 +4,30 @@
     "appVersionSource": "remote"
   },
   "build": {
+    "base": {
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.nudgebuddy.xyz/v1",
+        "EXPO_PUBLIC_WEB_URL": "https://www.nudgebuddy.xyz",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "580951632177-rc29dq1s3sev5aviqb0i2cknilpiojk7.apps.googleusercontent.com"
+      }
+    },
     "development": {
+      "extends": "base",
       "developmentClient": true,
       "distribution": "internal",
-      "env": { "APP_VARIANT": "development" }
+      "env": {
+        "APP_VARIANT": "development"
+      }
     },
     "preview": {
-      "distribution": "internal"
+      "extends": "base",
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      }
     },
     "production": {
+      "extends": "base",
       "autoIncrement": true
     }
   },
