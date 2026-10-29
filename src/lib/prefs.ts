@@ -19,7 +19,7 @@ export const PREFS = {
   zenTime: "zen_time",
   // Flashcard study order — "0" = keep the saved order, otherwise shuffled
   flashcardShuffle: "nudge:flashcardShuffle",
-  // Vibration feedback on taps and completions — "0" = off
+  // Vibration feedback on taps and completions — "1" = on (off by default)
   haptics: "nudge:haptics",
 } as const;
 

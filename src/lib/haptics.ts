@@ -3,12 +3,12 @@ import { getPref } from "./storage";
 import { PREFS } from "./prefs";
 
 // Each pattern keeps one meaning across the app so people learn it, and all of
-// them follow the Haptics switch in Settings:
+// them follow the Haptics switch in Settings (off until someone turns it on):
 //   selection — a choice changed (toggle, segmented control, card flip)
 //   impact    — something physical-feeling landed (a missed flashcard)
 //   success   — a task or milestone finished
 function enabled() {
-  return getPref(PREFS.haptics) !== "0";
+  return getPref(PREFS.haptics) === "1";
 }
 
 export const haptic = {

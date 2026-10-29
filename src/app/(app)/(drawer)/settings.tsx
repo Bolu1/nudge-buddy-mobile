@@ -90,7 +90,7 @@ export default function SettingsScreen() {
   const [calendarConnected, setCalendarConnected] = useState(false);
   const [calendarBusy, setCalendarBusy] = useState(false);
   const [callsEnabled, setCallsEnabled] = useState(() => getPref(PREFS.callsEnabled) !== "0");
-  const [hapticsOn, setHapticsOn] = useState(() => getPref(PREFS.haptics) !== "0");
+  const [hapticsOn, setHapticsOn] = useState(() => getPref(PREFS.haptics) === "1");
   const [appLock, setAppLockState] = useState(appLockEnabled);
   // undefined while checking; null when the phone has no biometrics set up
   const [lockLabel, setLockLabel] = useState<string | null | undefined>(undefined);
