@@ -38,7 +38,9 @@ export function GoogleSignInButton({ onError }: { onError: (msg: string) => void
         onError("Google Play Services isn't available on this device.");
         return;
       }
-      onError("Network error. Please try again.");
+      // Google's code (e.g. DEVELOPER_ERROR = client/fingerprint setup) makes failures diagnosable
+      const code = isErrorWithCode(e) ? e.code : null;
+      onError(code ? `Google sign-in failed (${code}). Please try again.` : "Network error. Please try again.");
     } finally {
       setLoading(false);
     }

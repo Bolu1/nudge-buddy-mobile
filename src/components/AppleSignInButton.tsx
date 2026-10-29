@@ -39,8 +39,9 @@ export function AppleSignInButton({ onError }: { onError: (msg: string) => void 
       if (res.ok && accessToken) await signIn(accessToken, refreshToken);
       else onError(firstError(res.data, "Apple sign-in failed."));
     } catch (e) {
-      if ((e as { code?: string }).code === "ERR_REQUEST_CANCELED") return;
-      onError("Apple sign-in failed. Please try again.");
+      const code = (e as { code?: string }).code;
+      if (code === "ERR_REQUEST_CANCELED") return;
+      onError(code ? `Apple sign-in failed (${code}). Please try again.` : "Apple sign-in failed. Please try again.");
     } finally {
       setLoading(false);
     }

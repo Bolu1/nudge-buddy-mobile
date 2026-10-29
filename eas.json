@@ -8,7 +8,8 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.nudgebuddy.xyz/v1",
         "EXPO_PUBLIC_WEB_URL": "https://www.nudgebuddy.xyz",
-        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "580951632177-rc29dq1s3sev5aviqb0i2cknilpiojk7.apps.googleusercontent.com"
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "580951632177-rc29dq1s3sev5aviqb0i2cknilpiojk7.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "580951632177-vk2sbo11u7i9i5077hmv780v7t96b1ln.apps.googleusercontent.com"
       }
     },
     "development": {
