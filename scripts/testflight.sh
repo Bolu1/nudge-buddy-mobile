@@ -55,6 +55,12 @@ fi
 mkdir -p "$OUT"
 : >"$LOG"
 
+# Metro reuses compiled modules across builds and doesn't notice a changed or
+# newly added EXPO_PUBLIC_* value, so a release could ship old config. Bundle
+# from scratch every time.
+rm -rf "${TMPDIR:-/tmp}"/metro-* "${TMPDIR:-/tmp}"/haste-map-* node_modules/.cache/metro
+export EXTRA_PACKAGER_ARGS="--reset-cache"
+
 echo "▸ Archiving (about 10–15 minutes)"
 # Build settings on the command line apply to every target, so the widget
 # extension's version always matches the app's (App Store Connect requires it)
