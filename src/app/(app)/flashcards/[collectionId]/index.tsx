@@ -195,7 +195,7 @@ export default function CollectionScreen() {
           </Text>
           {collection?.description ? <Text className="text-outline text-sm mt-1">{collection.description}</Text> : null}
           {collection ? (
-            <Text className="text-outline-variant text-xs mt-2">
+            <Text className="text-outline text-xs mt-2">
               {savedCount} card{savedCount === 1 ? "" : "s"}
               {collection.lastSession ? " · Last score " : ""}
               {collection.lastSession ? (
@@ -231,7 +231,7 @@ export default function CollectionScreen() {
 
             <View>
               <SectionTitle
-                right={<Text className="text-outline-variant text-xs">{draft.length}/{MAX_CARDS}</Text>}
+                right={<Text className="text-outline text-xs">{draft.length}/{MAX_CARDS}</Text>}
               >
                 Cards
               </SectionTitle>
@@ -239,7 +239,7 @@ export default function CollectionScreen() {
                 {draft.length === 0 ? (
                   <View className="rounded-2xl bg-surface-low border border-divider p-6 items-center">
                     <Text className="text-on-surface-variant text-sm font-medium">No cards yet</Text>
-                    <Text className="text-outline-variant text-sm mt-1 text-center">Write them yourself, or let us draft them from your notes.</Text>
+                    <Text className="text-outline text-sm mt-1 text-center">Write them yourself, or let us draft them from your notes.</Text>
                     <Button title="Generate from a document" icon="sparkles" variant="tonal" onPress={() => setGenerating(true)} className="mt-4" />
                   </View>
                 ) : (
@@ -308,7 +308,7 @@ export default function CollectionScreen() {
                     <View key={s.id} className={`flex-row items-center gap-3 px-4 py-3 ${i ? "border-t border-divider" : ""}`}>
                       <View className="flex-1">
                         <Text className="text-on-surface text-sm">{sessionDate(s.completedAt)}</Text>
-                        <Text className="text-outline-variant text-xs mt-0.5">
+                        <Text className="text-outline text-xs mt-0.5">
                           {s.mode === "MISSED" ? "Missed cards · " : ""}
                           {s.correctCards}/{s.totalCards} · {formatDuration(s.durationMs)}
                         </Text>

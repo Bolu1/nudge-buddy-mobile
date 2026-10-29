@@ -112,7 +112,7 @@ function GenerateFromDocumentForm({
           onPress={pick}
           disabled={busy}
         />
-        <Text className="text-outline-variant text-xs mt-1.5">
+        <Text className="text-outline text-xs mt-1.5">
           {asset?.size != null
             ? `${formatBytes(asset.size)} · tap to change`
             : `PDF, Word (.docx), .txt or .md · up to 10 MB, ${DOCUMENT_MAX_PAGES} pages`}
@@ -128,7 +128,7 @@ function GenerateFromDocumentForm({
           editable={!busy}
           className="w-24"
         />
-        <Text className="text-outline-variant text-xs mt-1.5">
+        <Text className="text-outline text-xs mt-1.5">
           Up to {remaining} more card{remaining === 1 ? "" : "s"} fit in this collection.
         </Text>
       </View>

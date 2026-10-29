@@ -66,7 +66,7 @@ export default function ActivateAccountScreen() {
         <View className="flex-row items-center">
           <Text className="text-outline text-sm">Didn&apos;t receive it? </Text>
           {countdown > 0 ? (
-            <Text className="text-outline-variant text-sm font-medium">Resend in {countdown}s</Text>
+            <Text className="text-outline text-sm font-medium">Resend in {countdown}s</Text>
           ) : (
             <Pressable onPress={handleResend} disabled={resending} hitSlop={8}>
               <Text className="text-primary-container text-sm font-medium">{resending ? "Sending…" : "Resend code"}</Text>

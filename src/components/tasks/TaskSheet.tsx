@@ -179,13 +179,13 @@ function TaskSheetForm({
                 size={18}
                 onPress={() => setSubtasks((prev) => prev.map((x) => (x.id === s.id ? { ...x, completed: !x.completed } : x)))}
               />
-              <Text className={`flex-1 text-sm ${s.completed ? "text-outline-variant line-through" : "text-on-surface-variant"}`}>{s.title}</Text>
+              <Text className={`flex-1 text-sm ${s.completed ? "text-outline line-through" : "text-on-surface-variant"}`}>{s.title}</Text>
               <Pressable onPress={() => setSubtasks((prev) => prev.filter((x) => x.id !== s.id))} hitSlop={8}>
-                <Icon name="x" size={14} color={colors.outlineVariant} />
+                <Icon name="x" size={14} color={colors.outline} />
               </Pressable>
             </View>
           ))}
-          {subtasks.length === 0 ? <Text className="text-outline-variant text-xs">No subtasks yet.</Text> : null}
+          {subtasks.length === 0 ? <Text className="text-outline text-xs">No subtasks yet.</Text> : null}
           <View className="flex-row items-center gap-2 mt-1">
             <Field
               value={newSubtask}

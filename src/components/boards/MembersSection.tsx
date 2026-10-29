@@ -70,7 +70,7 @@ export function MembersSection({ board, onChanged, onGone }: { board: BoardDetai
                 <Avatar id={m.id} firstName={m.firstName} lastName={m.lastName} size={32} />
                 <View className="flex-1">
                   <Text className="text-on-surface-variant text-sm" numberOfLines={1}>
-                    {fullName(m)}{isMe ? <Text className="text-outline-variant"> (you)</Text> : null}
+                    {fullName(m)}{isMe ? <Text className="text-outline"> (you)</Text> : null}
                   </Text>
                   {manageable ? (
                     <Pressable
@@ -82,7 +82,7 @@ export function MembersSection({ board, onChanged, onGone }: { board: BoardDetai
                       className="flex-row items-center gap-1 mt-0.5"
                     >
                       <Text className="text-outline text-xs">{ROLE_LABEL[m.role]}</Text>
-                      <Icon name="refresh" size={10} color={colors.outlineVariant} />
+                      <Icon name="refresh" size={10} color={colors.outline} />
                     </Pressable>
                   ) : (
                     <Text className="text-outline text-xs">{ROLE_LABEL[m.role]}</Text>
@@ -97,7 +97,7 @@ export function MembersSection({ board, onChanged, onGone }: { board: BoardDetai
                         () => run(`owner-${m.id}`, () => boardsApi.transferOwnership(board.id, m.id)))}
                       className="p-2 rounded-lg"
                     >
-                      <Icon name="flag" size={15} color={colors.outlineVariant} />
+                      <Icon name="flag" size={15} color={colors.outline} />
                     </Pressable>
                     <Pressable
                       disabled={!!busy}
@@ -106,7 +106,7 @@ export function MembersSection({ board, onChanged, onGone }: { board: BoardDetai
                         () => run(`remove-${m.id}`, () => boardsApi.removeMember(board.id, m.id)))}
                       className="p-2 rounded-lg"
                     >
-                      <Icon name="x" size={15} color={colors.outlineVariant} />
+                      <Icon name="x" size={15} color={colors.outline} />
                     </Pressable>
                   </View>
                 ) : null}
@@ -114,7 +114,7 @@ export function MembersSection({ board, onChanged, onGone }: { board: BoardDetai
             );
           })}
         </View>
-        {isOwner ? <Text className="text-outline-variant text-[11px] mt-3">Tap a role to switch editor/member.</Text> : null}
+        {isOwner ? <Text className="text-outline text-[11px] mt-3">Tap a role to switch editor/member.</Text> : null}
       </View>
 
       {isOwner ? (
@@ -136,7 +136,7 @@ export function MembersSection({ board, onChanged, onGone }: { board: BoardDetai
             />
             <Button title={inviting ? "Sending…" : "Invite"} variant="tonal" size="sm" onPress={invite} loading={inviting} disabled={!emails.trim()} />
           </View>
-          <Text className="text-outline-variant text-xs">{ROLE_HINT[inviteRole]}. People without an account get a sign-up link.</Text>
+          <Text className="text-outline text-xs">{ROLE_HINT[inviteRole]}. People without an account get a sign-up link.</Text>
           {results.map((r) => (
             <View key={r.email} className="flex-row justify-between gap-2">
               <Text className="text-outline text-xs flex-1" numberOfLines={1}>{r.email}</Text>
@@ -149,9 +149,9 @@ export function MembersSection({ board, onChanged, onGone }: { board: BoardDetai
               {board.invites.map((inv) => (
                 <View key={inv.id} className="flex-row items-center gap-2">
                   <Text className="flex-1 text-on-surface-variant text-xs" numberOfLines={1}>{inv.email}</Text>
-                  <Text className="text-outline-variant text-xs">{ROLE_LABEL[inv.role]}</Text>
+                  <Text className="text-outline text-xs">{ROLE_LABEL[inv.role]}</Text>
                   <Pressable disabled={!!busy} onPress={() => run(`revoke-${inv.id}`, () => boardsApi.revokeInvite(board.id, inv.id))} hitSlop={8}>
-                    <Text className="text-outline-variant text-xs">Revoke</Text>
+                    <Text className="text-outline text-xs">Revoke</Text>
                   </Pressable>
                 </View>
               ))}

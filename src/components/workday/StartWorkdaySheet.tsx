@@ -298,7 +298,7 @@ function StartWorkdayForm({
                           {formatHHMM12(b.start)} – {formatHHMM12(b.end)} · {formatDuration(minutesFromHHMM(b.end) - minutesFromHHMM(b.start))}
                         </Text>
                       </View>
-                      <Icon name="chevron-right" size={16} color={colors.outlineVariant} />
+                      <Icon name="chevron-right" size={16} color={colors.outline} />
                     </Pressable>
                   ))}
                 </View>
@@ -306,13 +306,13 @@ function StartWorkdayForm({
             </View>
 
             <View>
-              <Label>Goals <Text className="normal-case text-outline-variant">(optional)</Text></Label>
+              <Label>Goals <Text className="normal-case text-outline">(optional)</Text></Label>
               <View className="gap-2">
                 {goals.map((g, i) => (
                   <View key={`${g}-${i}`} className="flex-row items-center gap-2 bg-surface-low border border-divider rounded-xl px-3 py-2.5">
                     <Text className="text-on-surface-variant text-sm flex-1">{g}</Text>
                     <Pressable onPress={() => setGoals((prev) => prev.filter((_, j) => j !== i))} hitSlop={8}>
-                      <Icon name="x" size={14} color={colors.outlineVariant} />
+                      <Icon name="x" size={14} color={colors.outline} />
                     </Pressable>
                   </View>
                 ))}

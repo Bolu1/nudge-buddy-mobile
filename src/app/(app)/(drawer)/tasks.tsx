@@ -135,7 +135,7 @@ export default function TasksScreen() {
               </Text>
             </>
           ) : (
-            <Text className="text-outline-variant text-xs">No active block</Text>
+            <Text className="text-outline text-xs">No active block</Text>
           )}
         </View>
         <Segmented
@@ -186,7 +186,7 @@ export default function TasksScreen() {
                         <View className={`w-4 h-4 rounded items-center justify-center border ${s.completed ? "bg-primary-container border-primary-container" : "border-outline-variant"}`}>
                           {s.completed ? <Icon name="check" size={10} color={colors.onPrimary} strokeWidth={3} /> : null}
                         </View>
-                        <Text className={`text-sm flex-1 ${s.completed ? "text-outline-variant line-through" : "text-on-surface-variant"}`}>{s.title}</Text>
+                        <Text className={`text-sm flex-1 ${s.completed ? "text-outline line-through" : "text-on-surface-variant"}`}>{s.title}</Text>
                       </Pressable>
                     ))}
                   </View>
@@ -194,7 +194,7 @@ export default function TasksScreen() {
               </View>
             ) : (
               <View className="rounded-2xl bg-surface-low border border-divider p-8 items-center">
-                <Text className="text-outline-variant text-sm">No active tasks. Add one above.</Text>
+                <Text className="text-outline text-sm">No active tasks. Add one above.</Text>
               </View>
             )}
 
@@ -220,7 +220,7 @@ export default function TasksScreen() {
                         </View>
                         {taskDue(task) || calendarConnected ? (
                           <View className="flex-row items-center justify-between mt-2 ml-8">
-                            <Text className="text-outline-variant text-xs">{formatDue(taskDue(task))}</Text>
+                            <Text className="text-outline text-xs">{formatDue(taskDue(task))}</Text>
                             {calendarConnected ? <CalendarButton state={calendarState[task.id]} compact onPress={() => addToCalendar(task.id)} /> : null}
                           </View>
                         ) : null}
@@ -245,9 +245,9 @@ export default function TasksScreen() {
                       >
                         <Icon name="check" size={10} color={colors.bg} strokeWidth={3} />
                       </Pressable>
-                      <Text className="text-outline-variant text-sm line-through flex-1">{task.title}</Text>
+                      <Text className="text-outline text-sm line-through flex-1">{task.title}</Text>
                       <Pressable onPress={() => confirmDelete(task)} hitSlop={8} accessibilityLabel="Delete task">
-                        <Icon name="trash" size={15} color={colors.outlineVariant} />
+                        <Icon name="trash" size={15} color={colors.outline} />
                       </Pressable>
                     </View>
                   ))}

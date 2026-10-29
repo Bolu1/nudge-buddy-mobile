@@ -142,7 +142,7 @@ export default function InsightsScreen() {
                       <View className={`w-9 h-9 rounded-full items-center justify-center ${active ? "bg-on-primary-container" : "bg-surface-high"} ${isToday ? "border-2 border-primary-container" : ""}`}>
                         {active ? <Icon name="check" size={14} color={colors.primaryContainer} strokeWidth={2.5} /> : null}
                       </View>
-                      <Text className={`text-[10px] ${isToday ? "text-on-surface font-semibold" : "text-outline-variant"}`}>{shortDay(d.date)}</Text>
+                      <Text className={`text-[11px] ${isToday ? "text-on-surface font-semibold" : "text-outline"}`}>{shortDay(d.date)}</Text>
                     </View>
                   );
                 })}
@@ -186,9 +186,9 @@ export default function InsightsScreen() {
                   const h = Math.max(4, (v / max) * 130);
                   return (
                     <View key={d.date} className="items-center flex-1 gap-1.5">
-                      {i === best ? <Text className="text-primary text-[10px] font-semibold">{m.format(v)}</Text> : <Text className="text-[10px]"> </Text>}
+                      {i === best ? <Text className="text-primary text-[11px] font-semibold">{m.format(v)}</Text> : <Text className="text-[11px]"> </Text>}
                       <View className="w-6 rounded-lg" style={{ height: h, backgroundColor: i === best ? colors.primary : v ? colors.primaryContainer : colors.surfaceHigh, opacity: v ? 1 : 0.6 }} />
-                      <Text className={`text-[10px] ${d.date === today?.date ? "text-on-surface font-semibold" : "text-outline-variant"}`}>{shortDay(d.date)}</Text>
+                      <Text className={`text-[11px] ${d.date === today?.date ? "text-on-surface font-semibold" : "text-outline"}`}>{shortDay(d.date)}</Text>
                     </View>
                   );
                 })}

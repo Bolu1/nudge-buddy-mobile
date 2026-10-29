@@ -87,7 +87,7 @@ export default function SignUpScreen() {
       <View>
         <Label>Password</Label>
         <PasswordField value={password} onChangeText={clear(setPassword)} placeholder="••••••••" autoComplete="new-password" textContentType="newPassword" />
-        <Text className="text-outline-variant text-xs mt-1.5">Minimum 8 characters</Text>
+        <Text className="text-outline text-xs mt-1.5">Minimum 8 characters</Text>
       </View>
       <View>
         <Label>Confirm password</Label>

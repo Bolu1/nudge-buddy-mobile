@@ -255,7 +255,7 @@ export default function SettingsScreen() {
           <View>
             <Label>Timezone</Label>
             <Text className="text-on-surface-variant text-sm px-1">{deviceTz}{profile && profile.timezone !== deviceTz ? ` (saved: ${profile.timezone})` : ""}</Text>
-            <Text className="text-outline-variant text-xs px-1 mt-1">Follows this phone&apos;s timezone.</Text>
+            <Text className="text-outline text-xs px-1 mt-1">Follows this phone&apos;s timezone.</Text>
           </View>
           <Button title={savingProfile ? "Saving…" : "Save profile"} variant="tonal" onPress={saveProfile} loading={savingProfile} disabled={!firstName.trim() || !lastName.trim()} />
         </Section>
@@ -379,7 +379,7 @@ export default function SettingsScreen() {
             </View>
           ) : null}
           {/* App Store / Play rules: digital subscriptions can't be sold here through Paystack */}
-          <Text className="text-outline-variant text-xs">Plans are managed from the Nudge Buddy website.</Text>
+          <Text className="text-outline text-xs">Plans are managed from the Nudge Buddy website.</Text>
         </Section>
 
         <Section title="Integrations">
@@ -400,7 +400,7 @@ export default function SettingsScreen() {
           <Button title="Delete account" variant="danger" onPress={confirmDelete} />
         </View>
 
-        <Text className="text-outline-variant text-[11px] text-center">Nudge Buddy · {Platform.OS === "ios" ? "iOS" : "Android"}</Text>
+        <Text className="text-outline text-[11px] text-center">Nudge Buddy · {Platform.OS === "ios" ? "iOS" : "Android"}</Text>
       </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

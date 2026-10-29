@@ -180,13 +180,13 @@ function Summary({
       </View>
 
       {finished.status === "saved" ? (
-        <Text className="text-outline-variant text-xs text-center">
+        <Text className="text-outline text-xs text-center">
           {prev
             ? `Compared with ${prev.scorePct}% on ${new Date(prev.completedAt).toLocaleDateString([], { month: "short", day: "numeric" })}`
             : "First time — next session will be compared with this one."}
         </Text>
       ) : finished.status === "saving" ? (
-        <Text className="text-outline-variant text-xs text-center">Saving results…</Text>
+        <Text className="text-outline text-xs text-center">Saving results…</Text>
       ) : (
         <View className="gap-2">
           <ErrorBanner message={`Couldn't save results. ${finished.error ?? ""}`.trim()} />
@@ -371,7 +371,7 @@ export function StudySession({
         <IconButton name="x" onPress={confirmQuit} accessibilityLabel="Quit session" />
         <View className="flex-1">
           <Text className="text-on-surface text-sm font-semibold" numberOfLines={1}>{collection.title}</Text>
-          <Text className="text-outline-variant text-xs">
+          <Text className="text-outline text-xs">
             {mode === "MISSED" ? "Missed cards · " : ""}Card {index + 1} of {deck.length}
           </Text>
         </View>

@@ -81,7 +81,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               )}
               <View className="flex-1">
                 {t.title ? (
-                  <Text className="text-primary-container text-[10px] font-medium tracking-widest uppercase mb-1">
+                  <Text className="text-primary-container text-[11px] font-medium tracking-widest uppercase mb-1">
                     {t.title}
                   </Text>
                 ) : null}

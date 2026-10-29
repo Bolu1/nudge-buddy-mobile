@@ -35,7 +35,7 @@ export function ThemePicker({
             >
               <ThemeBackground theme={t.value} seed={seed} />
             </View>
-            <Text className={`text-[10px] text-center ${selected ? "text-on-surface" : "text-outline"}`} numberOfLines={1}>
+            <Text className={`text-[11px] text-center ${selected ? "text-on-surface" : "text-outline"}`} numberOfLines={1}>
               {t.label}
             </Text>
           </Pressable>

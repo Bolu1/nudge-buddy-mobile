@@ -44,7 +44,7 @@ export function InvitesList({ onAccepted, showEmpty = false }: { onAccepted?: (b
       {error ? <Text className="text-secondary text-xs mb-2">{error}</Text> : null}
       {!invites.length ? (
         <View className="rounded-2xl bg-surface-low border border-divider p-6 items-center">
-          <Text className="text-outline-variant text-sm">No pending invites.</Text>
+          <Text className="text-outline text-sm">No pending invites.</Text>
         </View>
       ) : (
         <View className="gap-2">

@@ -56,7 +56,7 @@ function Row({
       {hint ? <Text className="text-primary-container text-xs">{hint}</Text> : null}
       {badge ? (
         <View className="min-w-5 h-5 px-1.5 rounded-full bg-secondary items-center justify-center">
-          <Text className="text-on-secondary text-[10px] font-bold">{badge}</Text>
+          <Text className="text-on-secondary text-[11px] font-bold">{badge}</Text>
         </View>
       ) : null}
     </Pressable>

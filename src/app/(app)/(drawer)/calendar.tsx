@@ -232,7 +232,7 @@ export default function CalendarScreen() {
             const has = events.some((e) => { const s = parseEventDate(e.start); return s && isSameDay(s, d); });
             return (
               <Pressable key={d.toISOString()} onPress={() => setSelected(d)} className={`items-center w-10 py-1.5 rounded-xl ${sel ? "bg-on-primary-container" : ""}`}>
-                <Text className={`text-[10px] uppercase ${sel ? "text-primary" : "text-outline"}`}>{d.toLocaleDateString([], { weekday: "narrow" })}</Text>
+                <Text className={`text-[11px] uppercase ${sel ? "text-primary" : "text-outline"}`}>{d.toLocaleDateString([], { weekday: "narrow" })}</Text>
                 <Text className={`text-base font-semibold ${sel ? "text-primary" : isToday ? "text-primary-container" : "text-on-surface"}`}>{d.getDate()}</Text>
                 <View className={`w-1 h-1 rounded-full mt-0.5 ${has ? "bg-primary-container" : "bg-transparent"}`} />
               </Pressable>

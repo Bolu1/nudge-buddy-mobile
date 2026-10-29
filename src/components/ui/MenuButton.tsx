@@ -10,6 +10,7 @@ export function MenuButton() {
     <Pressable
       onPress={() => navigation.dispatch({ type: "OPEN_DRAWER" })}
       hitSlop={8}
+      accessibilityRole="button"
       accessibilityLabel="Open menu"
       className="w-9 h-9 rounded-full items-center justify-center active:bg-surface-high"
     >

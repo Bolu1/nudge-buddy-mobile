@@ -319,7 +319,7 @@ export default function FocusScreen() {
               <Text className="text-primary text-sm font-medium">Phase complete</Text>
               <Text className="text-outline text-xs mt-0.5">{phase === "WORK" ? "Back to it — you've got this." : "Take a breather. Stretch, sip some water."}</Text>
             </View>
-            <IconButton name="x" onPress={() => setCheckIn(false)} />
+            <IconButton name="x" onPress={() => setCheckIn(false)} accessibilityLabel="Dismiss" />
           </View>
         ) : null}
 
@@ -338,14 +338,14 @@ export default function FocusScreen() {
         <View>
           <SectionTitle>Recent sessions</SectionTitle>
           {history.length === 0 ? (
-            <Text className="text-outline-variant text-sm">No sessions yet.</Text>
+            <Text className="text-outline text-sm">No sessions yet.</Text>
           ) : (
             <View className="gap-2">
               {history.map((h) => (
                 <View key={h.id} className="flex-row items-center justify-between bg-surface-low border border-divider rounded-xl px-4 py-3">
                   <View>
                     <Text className="text-on-surface-variant text-sm">{h.config.pomodoroMinutes} min · {h.currentCycle}/{h.totalCycles} cycles</Text>
-                    <Text className="text-outline-variant text-xs mt-0.5">{new Date(h.startedAt).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</Text>
+                    <Text className="text-outline text-xs mt-0.5">{new Date(h.startedAt).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</Text>
                   </View>
                   <Text className={`text-xs ${h.status === "COMPLETED" ? "text-primary" : "text-outline"}`}>{h.status.toLowerCase()}</Text>
                 </View>

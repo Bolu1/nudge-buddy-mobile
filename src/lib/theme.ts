@@ -23,7 +23,7 @@ export const colors = {
   field: "#161412",
   fieldBorder: "#363330",
   divider: "#2c2927",
-  placeholder: "#4a4844",
+  placeholder: "#8a8680",
 } as const;
 
 export type Priority = "LOW" | "MEDIUM" | "HIGH";

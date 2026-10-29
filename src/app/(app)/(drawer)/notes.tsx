@@ -157,7 +157,7 @@ export default function NotesScreen() {
         {loading ? (
           [1, 2, 3].map((i) => <View key={i} className="h-16 mx-1 mb-2 bg-surface-low border border-divider rounded-xl" />)
         ) : sorted.length === 0 ? (
-          <Text className="text-outline-variant text-sm px-3 py-4">No notes yet. Tap New to write one, or ask your buddy to take a note.</Text>
+          <Text className="text-outline text-sm px-3 py-4">No notes yet. Tap New to write one, or ask your buddy to take a note.</Text>
         ) : (
           sorted.map((note) => {
             const preview = splitNotePreview(note.content);
@@ -170,7 +170,7 @@ export default function NotesScreen() {
               >
                 <Text className="text-on-surface text-sm font-medium" numberOfLines={1}>{preview.title}</Text>
                 {preview.body ? <Text className="text-outline text-xs mt-0.5 leading-5" numberOfLines={2}>{preview.body}</Text> : null}
-                <Text className="text-outline-variant text-[10px] mt-1.5">{relativeTime(note.createdAt)}</Text>
+                <Text className="text-outline text-[11px] mt-1.5">{relativeTime(note.createdAt)}</Text>
               </Pressable>
             );
           })
@@ -186,7 +186,7 @@ export default function NotesScreen() {
                 <Text className="text-outline text-sm">Notes</Text>
               </Pressable>
               <View className="flex-row items-center gap-3">
-                <Text className="text-outline-variant text-xs">
+                <Text className="text-outline text-xs">
                   {saveStatus === "saving" ? "Saving…" : saveStatus === "saved" ? "Saved" : openNote ? relativeTime(openNote.createdAt) : ""}
                 </Text>
                 {openNote ? <IconButton name="trash" onPress={() => deleteNote(openNote.id)} accessibilityLabel="Delete note" /> : null}

@@ -22,7 +22,7 @@ function editorHtml(content: string, placeholder: string) {
 <style>
   html,body{margin:0;background:${colors.bg};color:${colors.onSurface};font:16px/1.6 -apple-system,system-ui,Roboto,sans-serif;-webkit-text-size-adjust:100%}
   #ed{min-height:100vh;padding:16px 20px 120px;outline:none;box-sizing:border-box;word-wrap:break-word}
-  #ed:empty:before{content:attr(data-placeholder);color:${colors.outlineVariant}}
+  #ed:empty:before{content:attr(data-placeholder);color:${colors.placeholder}}
   h1{font-size:1.6em;margin:.6em 0 .3em}h2{font-size:1.3em;margin:.6em 0 .3em}h3{font-size:1.1em;margin:.6em 0 .3em}
   p{margin:.35em 0}ul,ol{padding-left:1.4em;margin:.35em 0}
   blockquote{border-left:3px solid ${colors.primaryContainer};margin:.5em 0;padding-left:12px;color:${colors.onSurfaceVariant}}

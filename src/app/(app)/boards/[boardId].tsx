@@ -33,7 +33,7 @@ function Assignees({ task }: { task: BoardTask }) {
       ))}
       {task.assignees.length > 3 ? (
         <View className="w-[22px] h-[22px] rounded-full bg-surface-high items-center justify-center" style={{ marginLeft: -6 }}>
-          <Text className="text-outline text-[9px]">+{task.assignees.length - 3}</Text>
+          <Text className="text-outline text-[11px]">+{task.assignees.length - 3}</Text>
         </View>
       ) : null}
     </View>
@@ -132,7 +132,7 @@ export default function BoardScreen() {
           </View>
           {board?.description ? <Text className="text-outline text-sm mt-1">{board.description}</Text> : null}
           {board ? (
-            <Text className="text-outline-variant text-xs mt-2">
+            <Text className="text-outline text-xs mt-2">
               {open.length} open · {done.length} done · You&apos;re {ROLE_LABEL[board.role].toLowerCase()}
             </Text>
           ) : null}
@@ -154,7 +154,7 @@ export default function BoardScreen() {
             <SectionTitle>To do</SectionTitle>
             {open.length === 0 ? (
               <View className="rounded-2xl bg-surface-low border border-divider p-8 items-center">
-                <Text className="text-outline-variant text-sm">
+                <Text className="text-outline text-sm">
                   {filter === "mine" ? "Nothing assigned to you here." : editor ? "No open tasks. Add one above." : "No open tasks."}
                 </Text>
               </View>
@@ -185,13 +185,13 @@ export default function BoardScreen() {
                       {task.description || task.dueAt ? (
                         <View className="ml-8 mt-2 gap-1">
                           {task.description ? <Text className="text-outline text-xs leading-5" numberOfLines={2}>{task.description}</Text> : null}
-                          {task.dueAt ? <Text className="text-outline-variant text-xs">{formatDue(task.dueAt)}</Text> : null}
+                          {task.dueAt ? <Text className="text-outline text-xs">{formatDue(task.dueAt)}</Text> : null}
                         </View>
                       ) : null}
                     </Pressable>
                   );
                 })}
-                {editor ? <Text className="text-outline-variant text-[11px] text-center mt-1">Tap to edit · hold to delete</Text> : null}
+                {editor ? <Text className="text-outline text-[11px] text-center mt-1">Tap to edit · hold to delete</Text> : null}
               </View>
             )}
           </View>
@@ -214,9 +214,9 @@ export default function BoardScreen() {
                     >
                       <Icon name="check" size={10} color={colors.bg} strokeWidth={3} />
                     </Pressable>
-                    <Text className="text-outline-variant text-sm line-through flex-1">{task.title}</Text>
+                    <Text className="text-outline text-sm line-through flex-1">{task.title}</Text>
                     {task.completedBy ? (
-                      <Text className="text-outline-variant text-xs">
+                      <Text className="text-outline text-xs">
                         by {task.completedBy.id === board?.viewerId ? "you" : fullName(task.completedBy)}
                       </Text>
                     ) : null}

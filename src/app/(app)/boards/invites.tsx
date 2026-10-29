@@ -8,7 +8,7 @@ import { InvitesList } from "@/components/boards/InvitesList";
 export default function BoardInvitesScreen() {
   return (
     <SafeAreaView edges={["top"]} className="flex-1 bg-bg">
-      <ScreenHeader title="Board invites" left={<IconButton name="chevron-left" onPress={() => (router.canGoBack() ? router.back() : router.replace("/boards"))} />} />
+      <ScreenHeader title="Board invites" left={<IconButton name="chevron-left" onPress={() => (router.canGoBack() ? router.back() : router.replace("/boards"))} accessibilityLabel="Back" />} />
       <ScrollView contentContainerClassName="p-4 pb-32">
         <InvitesList showEmpty onAccepted={(id) => router.replace({ pathname: "/boards/[boardId]", params: { boardId: id } })} />
       </ScrollView>

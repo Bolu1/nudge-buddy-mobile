@@ -49,7 +49,7 @@ export default function FlashcardsScreen() {
         ) : list.length === 0 ? (
           <View className="rounded-2xl bg-surface-low border border-divider p-8 items-center">
             <Text className="text-on-surface-variant text-sm font-medium">No collections yet</Text>
-            <Text className="text-outline-variant text-sm mt-1 text-center">Create one, add up to 50 cards, then test yourself.</Text>
+            <Text className="text-outline text-sm mt-1 text-center">Create one, add up to 50 cards, then test yourself.</Text>
           </View>
         ) : (
           <View className="gap-3">
@@ -66,11 +66,11 @@ export default function FlashcardsScreen() {
                   <Text className="text-on-surface text-sm font-medium" numberOfLines={1}>{c.title}</Text>
                   {c.description ? <Text className="text-outline text-xs leading-5" numberOfLines={2}>{c.description}</Text> : null}
                   <View className="flex-row items-center justify-between mt-1">
-                    <Text className="text-outline-variant text-xs">
+                    <Text className="text-outline text-xs">
                       {c.cardCount} card{c.cardCount === 1 ? "" : "s"}
                     </Text>
                     <Text
-                      className="text-outline-variant text-xs"
+                      className="text-outline text-xs"
                       style={c.lastSession ? { color: SCORE_COLOR[scoreTone(c.lastSession.scorePct)] } : undefined}
                     >
                       {c.lastSession ? `Last score ${c.lastSession.scorePct}%` : "Not studied yet"}

@@ -26,7 +26,7 @@ function MemberStack({ members, total }: { members: BoardSummary["memberPreview"
       ))}
       {extra > 0 ? (
         <View className="h-6 min-w-6 px-1 rounded-full bg-surface-high items-center justify-center border-2 border-surface-low" style={{ marginLeft: -6 }}>
-          <Text className="text-on-surface-variant text-[9px] font-semibold">+{extra}</Text>
+          <Text className="text-on-surface-variant text-[11px] font-semibold">+{extra}</Text>
         </View>
       ) : null}
     </View>
@@ -73,7 +73,7 @@ export default function BoardsScreen() {
           ) : list.length === 0 ? (
             <View className="rounded-2xl bg-surface-low border border-divider p-8 items-center">
               <Text className="text-on-surface-variant text-sm font-medium">No boards yet</Text>
-              <Text className="text-outline-variant text-sm mt-1 text-center">Create one and invite people by email to share tasks.</Text>
+              <Text className="text-outline text-sm mt-1 text-center">Create one and invite people by email to share tasks.</Text>
             </View>
           ) : (
             <View className="gap-3">
@@ -86,12 +86,12 @@ export default function BoardsScreen() {
                   <View className="flex-row items-center gap-2">
                     <View className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: b.color ?? "#8da38a" }} />
                     <Text className="text-on-surface text-sm font-medium flex-1" numberOfLines={1}>{b.name}</Text>
-                    <Text className="text-outline-variant text-[11px]">{ROLE_LABEL[b.role]}</Text>
+                    <Text className="text-outline text-[11px]">{ROLE_LABEL[b.role]}</Text>
                   </View>
                   <Text className="text-outline text-xs leading-5" numberOfLines={2}>{b.description || "No description"}</Text>
                   <View className="flex-row items-center justify-between">
                     <MemberStack members={b.memberPreview} total={b.memberCount} />
-                    <Text className="text-outline-variant text-xs">{b.openTaskCount} open</Text>
+                    <Text className="text-outline text-xs">{b.openTaskCount} open</Text>
                   </View>
                 </Pressable>
               ))}

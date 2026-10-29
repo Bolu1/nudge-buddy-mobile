@@ -100,7 +100,7 @@ export default function WorkspaceScreen() {
         value={input}
         onChangeText={setInput}
         placeholder={processing ? "Processing…" : status !== "open" ? "Connecting…" : "Ask anything…"}
-        placeholderTextColor={colors.outlineVariant}
+        placeholderTextColor={colors.placeholder}
         editable={!processing}
         returnKeyType="send"
         onSubmitEditing={() => submit()}
@@ -280,7 +280,7 @@ export default function WorkspaceScreen() {
           {messages.map((m) => (
             <View key={m.id} className={`max-w-[85%] ${m.role === "user" ? "self-end items-end" : "self-start"}`}>
               {m.action && ACTION_LABELS[m.action] ? (
-                <Text className="text-primary-container text-[10px] font-medium tracking-widest uppercase mb-1">{ACTION_LABELS[m.action]}</Text>
+                <Text className="text-primary-container text-[11px] font-medium tracking-widest uppercase mb-1">{ACTION_LABELS[m.action]}</Text>
               ) : null}
               <View
                 className={`rounded-2xl px-3.5 py-2.5 ${
@@ -289,7 +289,7 @@ export default function WorkspaceScreen() {
               >
                 <Text className={`text-sm leading-5 ${m.role === "user" ? "text-primary" : m.role === "error" ? "text-error" : "text-on-surface"}`}>{m.text}</Text>
               </View>
-              <Text className="text-outline-variant text-[10px] mt-1">{m.time}</Text>
+              <Text className="text-outline text-[11px] mt-1">{m.time}</Text>
             </View>
           ))}
           {processing ? (

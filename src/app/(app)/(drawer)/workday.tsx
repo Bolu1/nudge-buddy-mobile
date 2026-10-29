@@ -230,7 +230,7 @@ export default function WorkdayScreen() {
           </View>
         ) : null}
         <Text className="text-on-surface-variant text-sm font-medium">{t.name}</Text>
-        <Text className="text-outline-variant text-xs mt-0.5">{t.blocks.length} blocks{deletable ? " · hold to delete" : ""}</Text>
+        <Text className="text-outline text-xs mt-0.5">{t.blocks.length} blocks{deletable ? " · hold to delete" : ""}</Text>
       </Pressable>
     );
     return (
@@ -321,16 +321,16 @@ export default function WorkdayScreen() {
                       <View className={`w-4 h-4 rounded border items-center justify-center ${t.status === "COMPLETED" ? "bg-primary-container border-primary-container" : "border-outline-variant"}`}>
                         {t.status === "COMPLETED" ? <Icon name="check" size={10} color={colors.onPrimary} strokeWidth={3} /> : null}
                       </View>
-                      <Text className={`flex-1 text-sm ${t.status === "COMPLETED" ? "line-through text-outline-variant" : "text-on-surface-variant"}`} numberOfLines={1}>{t.title}</Text>
+                      <Text className={`flex-1 text-sm ${t.status === "COMPLETED" ? "line-through text-outline" : "text-on-surface-variant"}`} numberOfLines={1}>{t.title}</Text>
                     </Pressable>
                   ))}
                 </View>
               ) : (
-                <Text className="text-outline-variant text-xs">No tasks in this block.</Text>
+                <Text className="text-outline text-xs">No tasks in this block.</Text>
               )}
             </>
           ) : (
-            <Text className="text-outline-variant text-xs">No block running right now.</Text>
+            <Text className="text-outline text-xs">No block running right now.</Text>
           )}
         </View>
 
@@ -345,7 +345,7 @@ export default function WorkdayScreen() {
                 const top = (h * 60 - startMins) * PX_PER_MIN;
                 if (top < -10 || top > height + 10) return null;
                 return (
-                  <Text key={h} className="absolute right-0 text-outline-variant text-[11px]" style={{ top: top - 7 }}>
+                  <Text key={h} className="absolute right-0 text-outline text-[11px]" style={{ top: top - 7 }}>
                     {formatHour(h)}
                   </Text>
                 );
@@ -387,19 +387,19 @@ export default function WorkdayScreen() {
 
         {/* Goals */}
         <View className="bg-surface-low border border-divider rounded-2xl p-4">
-          <SectionTitle right={workday.goals.length ? <Text className="text-outline-variant text-xs">{workday.goals.filter((g) => g.completed).length}/{workday.goals.length} completed</Text> : undefined}>
+          <SectionTitle right={workday.goals.length ? <Text className="text-outline text-xs">{workday.goals.filter((g) => g.completed).length}/{workday.goals.length} completed</Text> : undefined}>
             Goals
           </SectionTitle>
-          {workday.goals.length === 0 ? <Text className="text-outline-variant text-xs mb-3">No goals yet.</Text> : null}
+          {workday.goals.length === 0 ? <Text className="text-outline text-xs mb-3">No goals yet.</Text> : null}
           <View className="gap-1 mb-3">
             {workday.goals.map((g) => (
               <View key={g.id} className="flex-row items-start gap-2.5 py-1.5">
                 <Pressable onPress={() => toggleGoal(g)} hitSlop={6} className={`w-4 h-4 rounded border mt-0.5 items-center justify-center ${g.completed ? "bg-primary-container border-primary-container" : "border-outline-variant"}`}>
                   {g.completed ? <Icon name="check" size={10} color={colors.onPrimary} strokeWidth={3} /> : null}
                 </Pressable>
-                <Text className={`flex-1 text-sm ${g.completed ? "line-through text-outline-variant" : "text-on-surface-variant"}`}>{g.title}</Text>
+                <Text className={`flex-1 text-sm ${g.completed ? "line-through text-outline" : "text-on-surface-variant"}`}>{g.title}</Text>
                 <Pressable onPress={() => deleteGoal(g.id)} hitSlop={8}>
-                  <Icon name="x" size={14} color={colors.outlineVariant} />
+                  <Icon name="x" size={14} color={colors.outline} />
                 </Pressable>
               </View>
             ))}

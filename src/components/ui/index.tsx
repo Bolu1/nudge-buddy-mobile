@@ -68,6 +68,8 @@ export function Button({
     <Pressable
       onPress={onPress}
       disabled={disabled || loading}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: !!(disabled || loading), busy: !!loading }}
       className={`flex-row items-center justify-center gap-2 rounded-full ${pad} ${buttonBg[variant]} ${disabled || loading ? "opacity-50" : ""} ${className}`}
     >
       {loading ? (
@@ -102,7 +104,9 @@ export function IconButton({
       onPress={onPress}
       disabled={disabled}
       hitSlop={8}
+      accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ disabled: !!disabled }}
       className={`w-9 h-9 rounded-full items-center justify-center active:bg-surface-high ${disabled ? "opacity-40" : ""} ${className}`}
     >
       <Icon name={name} size={size} color={color} />
@@ -138,6 +142,7 @@ export function PasswordField(props: TextInputProps) {
         onPress={() => setShown((s) => !s)}
         hitSlop={8}
         className="absolute right-3 p-1"
+        accessibilityRole="button"
         accessibilityLabel={shown ? "Hide password" : "Show password"}
       >
         <Icon name={shown ? "eye-off" : "eye"} size={17} color={colors.outline} />
