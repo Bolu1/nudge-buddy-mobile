@@ -2,8 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "@/components/ui/SafeArea";
 import Svg, { Circle } from "react-native-svg";
+import Animated, { Easing, useAnimatedProps, useAnimatedStyle, useSharedValue, withSequence, withTiming } from "react-native-reanimated";
 import { pomodoro } from "@/lib/api";
 import { emitChange, onChange } from "@/lib/events";
+import { haptic } from "@/lib/haptics";
+import { EASE_OUT, listEntering, listExiting, listLayout, MOTION } from "@/lib/motion";
 import { getPref, setPref } from "@/lib/storage";
 import { PREFS } from "@/lib/prefs";
 import { colors } from "@/lib/theme";
@@ -11,6 +14,47 @@ import { useWs } from "@/lib/ws-context";
 import { Button, ErrorBanner, Icon, IconButton, ScreenHeader, SectionTitle } from "@/components/ui";
 
 type Phase = "WORK" | "SHORT_BREAK" | "LONG_BREAK";
+
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+const RING_R = 90;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_R;
+
+/**
+ * Glides between the once-a-second ticks instead of stepping, eases on bigger
+ * jumps (a new phase, a reset), and gives one soft pulse when a phase ends.
+ */
+function FocusRing({ progress, color, pulse, children }: { progress: number; color: string; pulse: boolean; children: React.ReactNode }) {
+  const p = useSharedValue(progress);
+  const scale = useSharedValue(1);
+  useEffect(() => {
+    const jump = Math.abs(progress - p.get()) > 0.05;
+    p.set(withTiming(progress, jump ? { duration: MOTION.slow, easing: EASE_OUT } : { duration: 1000, easing: Easing.linear }));
+  }, [progress, p]);
+  useEffect(() => {
+    if (pulse) scale.set(withSequence(withTiming(1.04, { duration: MOTION.base, easing: EASE_OUT }), withTiming(1, { duration: MOTION.slow, easing: EASE_OUT })));
+  }, [pulse, scale]);
+  const ringProps = useAnimatedProps(() => ({ strokeDashoffset: RING_CIRCUMFERENCE * (1 - p.value) }));
+  const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  return (
+    <Animated.View className="items-center justify-center" style={pulseStyle}>
+      <Svg width={220} height={220} viewBox="0 0 220 220" style={{ transform: [{ rotate: "-90deg" }] }}>
+        <Circle cx={110} cy={110} r={RING_R} fill="none" stroke={colors.surfaceHigh} strokeWidth={8} />
+        <AnimatedCircle
+          cx={110}
+          cy={110}
+          r={RING_R}
+          fill="none"
+          stroke={color}
+          strokeWidth={8}
+          strokeLinecap="round"
+          strokeDasharray={RING_CIRCUMFERENCE}
+          animatedProps={ringProps}
+        />
+      </Svg>
+      {children}
+    </Animated.View>
+  );
+}
 type TimerState = "idle" | "running" | "paused";
 
 interface PomodoroSession {
@@ -135,6 +179,7 @@ export default function FocusScreen() {
     if (msg.type === "pomodoro_transition") { setCheckIn(true); loadActive(); }
     if (msg.type === "pomodoro_sync") loadActive();
     if (msg.type === "pomodoro_complete") {
+      haptic.success();
       setTimerState("idle"); setSession(null); setSeconds(cfgWorkRef.current * 60); setCheckIn(false); loadHistory();
     }
     if (msg.type === "action_result") {
@@ -225,6 +270,10 @@ export default function FocusScreen() {
     emitChange("focus");
   }
 
+  useEffect(() => {
+    if (checkIn) haptic.success();
+  }, [checkIn]);
+
   async function cancel() {
     await pomodoro.cancel().catch(() => {});
     setTimerState("idle");
@@ -243,8 +292,6 @@ export default function FocusScreen() {
       : phase === "SHORT_BREAK" ? session?.config.shortBreakMinutes ?? cfgShort
       : session?.config.longBreakMinutes ?? cfgLong) * 60;
   const progress = Math.min(1, Math.max(0, 1 - seconds / Math.max(1, totalSecs)));
-  const R = 90;
-  const circumference = 2 * Math.PI * R;
 
   return (
     <SafeAreaView edges={["top"]} className="flex-1 bg-bg">
@@ -259,26 +306,12 @@ export default function FocusScreen() {
           <View className={`px-4 py-1.5 rounded-full mb-6 ${phase === "WORK" ? "bg-on-primary-container" : "bg-surface-high"}`}>
             <Text className={`text-xs font-medium tracking-wide uppercase ${phase === "WORK" ? "text-primary-container" : "text-on-surface-variant"}`}>{phaseLabel[phase]}</Text>
           </View>
-          <View className="items-center justify-center">
-            <Svg width={220} height={220} viewBox="0 0 220 220" style={{ transform: [{ rotate: "-90deg" }] }}>
-              <Circle cx={110} cy={110} r={R} fill="none" stroke={colors.surfaceHigh} strokeWidth={8} />
-              <Circle
-                cx={110}
-                cy={110}
-                r={R}
-                fill="none"
-                stroke={phase === "WORK" ? colors.primaryContainer : colors.secondary}
-                strokeWidth={8}
-                strokeLinecap="round"
-                strokeDasharray={circumference}
-                strokeDashoffset={circumference * (1 - progress)}
-              />
-            </Svg>
+          <FocusRing progress={progress} color={phase === "WORK" ? colors.primaryContainer : colors.secondary} pulse={checkIn}>
             <View className="absolute items-center">
               <Text className="text-on-surface text-5xl font-semibold" style={{ fontVariant: ["tabular-nums"] }}>{formatTime(seconds)}</Text>
               {timerState === "paused" ? <Text className="text-outline text-xs mt-1 uppercase tracking-widest">Paused</Text> : null}
             </View>
-          </View>
+          </FocusRing>
 
           <View className="flex-row items-center gap-4 mt-8">
             {timerState === "idle" ? (
@@ -304,26 +337,31 @@ export default function FocusScreen() {
         </View>
 
         {showConfig && timerState === "idle" ? (
-          <View className="bg-surface-low border border-divider rounded-2xl px-4 py-2">
+          <Animated.View entering={listEntering} exiting={listExiting} layout={listLayout} className="bg-surface-low border border-divider rounded-2xl px-4 py-2">
             <Stepper label="Work (min)" value={cfgWork} min={1} max={120} onChange={saveCfg(CFG.work, setCfgWork)} />
             <Stepper label="Short break" value={cfgShort} min={1} max={30} onChange={saveCfg(CFG.short, setCfgShort)} />
             <Stepper label="Long break" value={cfgLong} min={1} max={60} onChange={saveCfg(CFG.long, setCfgLong)} />
             <Stepper label="Cycles" value={cfgCycles} min={1} max={10} onChange={saveCfg(CFG.cycles, setCfgCycles)} />
-          </View>
+          </Animated.View>
         ) : null}
 
         {checkIn ? (
-          <View className="bg-[#1a2b1a] border border-on-primary-container rounded-2xl p-4 flex-row items-center gap-3">
+          <Animated.View
+            entering={listEntering}
+            exiting={listExiting}
+            layout={listLayout}
+            className="bg-[#1a2b1a] border border-on-primary-container rounded-2xl p-4 flex-row items-center gap-3"
+          >
             <Icon name="check" size={16} color={colors.primaryContainer} strokeWidth={2.5} />
             <View className="flex-1">
               <Text className="text-primary text-sm font-medium">Phase complete</Text>
               <Text className="text-outline text-xs mt-0.5">{phase === "WORK" ? "Back to it — you've got this." : "Take a breather. Stretch, sip some water."}</Text>
             </View>
             <IconButton name="x" onPress={() => setCheckIn(false)} accessibilityLabel="Dismiss" />
-          </View>
+          </Animated.View>
         ) : null}
 
-        <View className="bg-surface-low border border-divider rounded-2xl p-4">
+        <Animated.View layout={listLayout} className="bg-surface-low border border-divider rounded-2xl p-4">
           <SectionTitle>Smart suggestions</SectionTitle>
           <View className="gap-2">
             {suggestions.map((s) => (
@@ -333,9 +371,9 @@ export default function FocusScreen() {
               </View>
             ))}
           </View>
-        </View>
+        </Animated.View>
 
-        <View>
+        <Animated.View layout={listLayout}>
           <SectionTitle>Recent sessions</SectionTitle>
           {history.length === 0 ? (
             <Text className="text-outline text-sm">No sessions yet.</Text>
@@ -352,7 +390,7 @@ export default function FocusScreen() {
               ))}
             </View>
           )}
-        </View>
+        </Animated.View>
       </ScrollView>
     </SafeAreaView>
   );

@@ -1,5 +1,5 @@
 import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from "expo-audio";
-import * as Haptics from "expo-haptics";
+import { haptic } from "./haptics";
 import { File, Paths } from "expo-file-system";
 import { cuePcm, pcmToWavBase64, SAMPLE_RATE, type Cue } from "./voice/pcm";
 
@@ -53,6 +53,6 @@ export function playCueSound(cue: Cue): number {
 
 /** Rising two-note chime played when a task is marked done */
 export function playTaskCompleteSound() {
-  void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+  haptic.success();
   playCueSound("taskComplete");
 }

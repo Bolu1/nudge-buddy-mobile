@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { Alert, KeyboardAvoidingView, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "@/components/ui/SafeArea";
+import Animated, { LayoutAnimationConfig } from "react-native-reanimated";
 import { router, useLocalSearchParams } from "expo-router";
 import { boards as boardsApi } from "@/lib/api";
 import { ROLE_LABEL, apiError, canEditTasks, fullName, unwrap, type BoardDetail, type BoardTask } from "@/lib/boards";
 import { emitChange } from "@/lib/events";
+import { COMPLETE_SETTLE_MS, listEntering, listExiting, listLayout } from "@/lib/motion";
 import { playTaskCompleteSound } from "@/lib/sounds";
 import { PRIORITY_ORDER, formatDue } from "@/lib/tasks";
 import { colors, priorityStyle } from "@/lib/theme";
@@ -13,7 +15,7 @@ import { Avatar } from "@/components/Avatar";
 import { BoardFormSheet } from "@/components/boards/BoardFormSheet";
 import { BoardTaskSheet } from "@/components/boards/BoardTaskSheet";
 import { MembersSection } from "@/components/boards/MembersSection";
-import { Button, Icon, IconButton, Segmented, SectionTitle, Spinner } from "@/components/ui";
+import { Button, Checkbox, Icon, IconButton, ListItem, Segmented, SectionTitle, Spinner } from "@/components/ui";
 
 function completeHint(task: BoardTask): string {
   if (task.canComplete) return task.completedAt ? "Mark as open" : "Mark as done";
@@ -41,6 +43,7 @@ function Assignees({ task }: { task: BoardTask }) {
 }
 
 export default function BoardScreen() {
+  const [settling, setSettling] = useState<Set<string>>(new Set());
   const { boardId } = useLocalSearchParams<{ boardId: string }>();
   const { addListener } = useWs();
   const [board, setBoard] = useState<BoardDetail | null>(null);
@@ -74,11 +77,24 @@ export default function BoardScreen() {
 
   async function toggleComplete(task: BoardTask) {
     if (!task.canComplete) { Alert.alert(completeHint(task)); return; }
+    if (settling.has(task.id)) return;
     const completing = !task.completedAt;
-    if (completing) playTaskCompleteSound();
     setError("");
-    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, completedAt: completing ? new Date().toISOString() : null } : t)));
-    const res = completing ? await boardsApi.completeTask(boardId, task.id) : await boardsApi.reopenTask(boardId, task.id);
+    const request = completing ? boardsApi.completeTask(boardId, task.id) : boardsApi.reopenTask(boardId, task.id);
+    let settled: Promise<void> | undefined;
+    if (completing) {
+      // Let the tick land before the task moves to Completed (and before the refetch)
+      playTaskCompleteSound();
+      setSettling((s) => new Set(s).add(task.id));
+      settled = new Promise((resolve) => setTimeout(() => {
+        setSettling((s) => { const n = new Set(s); n.delete(task.id); return n; });
+        setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, completedAt: new Date().toISOString() } : t)));
+        resolve();
+      }, COMPLETE_SETTLE_MS));
+    } else {
+      setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, completedAt: null } : t)));
+    }
+    const [res] = await Promise.all([request, settled]);
     if (!res.ok) setError(apiError(res));
     load();
   }
@@ -141,6 +157,7 @@ export default function BoardScreen() {
 
       {loading ? <Spinner /> : (
         <KeyboardAvoidingView behavior="padding" className="flex-1">
+        <LayoutAnimationConfig skipEntering>
         <ScrollView
           contentContainerClassName="p-4 gap-6 pb-32"
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} tintColor={colors.primaryContainer} />}
@@ -163,18 +180,19 @@ export default function BoardScreen() {
                 {open.map((task) => {
                   const p = priorityStyle[task.priority];
                   return (
+                    <ListItem key={task.id}>
                     <Pressable
-                      key={task.id}
                       onPress={editor ? () => setTaskSheet({ open: true, task }) : undefined}
                       onLongPress={editor ? () => deleteTask(task) : undefined}
                       className="bg-surface-low border border-divider rounded-xl p-4"
                     >
                       <View className="flex-row items-center gap-3">
-                        <Pressable
+                        <Checkbox
+                          checked={settling.has(task.id)}
+                          size={18}
+                          dimmed={!task.canComplete}
                           onPress={() => toggleComplete(task)}
-                          hitSlop={8}
                           accessibilityLabel={completeHint(task)}
-                          className={`w-[18px] h-[18px] rounded-full border border-outline-variant ${task.canComplete ? "" : "opacity-30"}`}
                         />
                         <Text className="flex-1 text-on-surface-variant text-sm leading-5">{task.title}</Text>
                         <Assignees task={task} />
@@ -189,6 +207,7 @@ export default function BoardScreen() {
                         </View>
                       ) : null}
                     </Pressable>
+                    </ListItem>
                   );
                 })}
                 {editor ? <Text className="text-outline text-[11px] text-center mt-1">Tap to edit · hold to delete</Text> : null}
@@ -197,12 +216,12 @@ export default function BoardScreen() {
           </View>
 
           {done.length > 0 ? (
-            <View>
+            <Animated.View entering={listEntering} exiting={listExiting} layout={listLayout}>
               <SectionTitle>Completed</SectionTitle>
               <View className="gap-2">
                 {done.map((task) => (
+                  <ListItem key={task.id}>
                   <Pressable
-                    key={task.id}
                     onLongPress={editor ? () => deleteTask(task) : undefined}
                     className="bg-surface-low/50 border border-surface-high/50 rounded-xl p-4 flex-row items-center gap-3"
                   >
@@ -221,15 +240,17 @@ export default function BoardScreen() {
                       </Text>
                     ) : null}
                   </Pressable>
+                  </ListItem>
                 ))}
               </View>
-            </View>
+            </Animated.View>
           ) : null}
 
           {board ? (
             <MembersSection board={board} onChanged={load} onGone={() => { emitChange("boards"); router.replace("/boards"); }} />
           ) : null}
         </ScrollView>
+        </LayoutAnimationConfig>
         </KeyboardAvoidingView>
       )}
 

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Alert, BackHandler, Pressable, ScrollView, Text, View } from "react-native";
-import * as Haptics from "expo-haptics";
+import { haptic, ImpactFeedbackStyle } from "@/lib/haptics";
 import Animated, { interpolate, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { flashcards as flashcardsApi } from "@/lib/api";
 import { apiError, unwrap } from "@/lib/boards";
@@ -17,7 +17,7 @@ import {
   type StudyMode,
 } from "@/lib/flashcards";
 import { colors } from "@/lib/theme";
-import { Celebration } from "@/components/flashcards/Celebration";
+import { Celebration } from "@/components/Celebration";
 import { ThemeBackground } from "@/components/flashcards/ThemeBackground";
 import { Button, ErrorBanner, Icon, IconButton, SectionTitle } from "@/components/ui";
 
@@ -311,17 +311,15 @@ export function StudySession({
 
   function reveal() {
     setRevealed(true);
-    void Haptics.selectionAsync().catch(() => {});
+    haptic.selection();
   }
 
   function mark(correct: boolean) {
     const card = deck[index];
     const now = Date.now();
     const next = [...results, { cardId: card.id, correct, timeMs: now - cardStart.current }];
-    void (correct
-      ? Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
-      : Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-    ).catch(() => {});
+    if (correct) haptic.success();
+    else haptic.impact(ImpactFeedbackStyle.Medium);
     cardStart.current = now;
     setResults(next);
     if (index + 1 < deck.length) {

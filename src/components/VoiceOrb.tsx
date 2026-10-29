@@ -4,6 +4,11 @@ import { BlurMask, Canvas, Circle, Picture, Skia, createPicture, useClock } from
 import { useDerivedValue } from "react-native-reanimated";
 import { resolvePreset, type OrbState } from "thinking-orbs/engine";
 import { orbFrame, scaleCounts, scaleRadii, type OrbMode } from "./orb/engine";
+import { useReducedMotion } from "@/lib/motion";
+
+// With Reduce Motion the orb still shows its state, just at a slow drift;
+// colour and the status line under it carry the rest
+const REDUCED_SPEED = 0.25;
 
 export type VoiceOrbState = "idle" | "listening" | "hearing" | "speaking" | "processing" | "muted";
 
@@ -31,6 +36,7 @@ const hexToRgb = (h: string) => ({
  */
 export function VoiceOrb({ state, size = 64, glow = true }: { state: VoiceOrbState; size?: number; glow?: boolean }) {
   const s = STATES[state];
+  const reduceMotion = useReducedMotion();
 
   // Mode + options for this state and size — computed once per change, on the JS thread.
   // Above 64pt, dots and density grow sub-linearly so the orb doesn't read sparse.
@@ -38,8 +44,8 @@ export function VoiceOrb({ state, size = 64, glow = true }: { state: VoiceOrbSta
     const { mode, speed, opts } = resolvePreset(s.orb, size >= 48 ? 64 : size >= 26 ? 32 : 20);
     const grow = Math.max(1, size / 64);
     const scaled = grow > 1 ? scaleCounts(scaleRadii(opts, grow ** 0.4), grow ** 0.3) : opts;
-    return { mode: mode as OrbMode, speed: speed * s.speed, opts: scaled };
-  }, [s, size]);
+    return { mode: mode as OrbMode, speed: speed * s.speed * (reduceMotion ? REDUCED_SPEED : 1), opts: scaled };
+  }, [s, size, reduceMotion]);
   const tint = useMemo(() => hexToRgb(s.color), [s.color]);
 
   const clock = useClock();

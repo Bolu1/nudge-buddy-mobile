@@ -3,6 +3,7 @@ import { Alert, KeyboardAvoidingView, Pressable, RefreshControl, ScrollView, Tex
 import { SafeAreaView } from "@/components/ui/SafeArea";
 import { workday as workdayApi, tasks as tasksApi } from "@/lib/api";
 import { emitChange, onChange } from "@/lib/events";
+import { haptic } from "@/lib/haptics";
 import { playTaskCompleteSound } from "@/lib/sounds";
 import { colors } from "@/lib/theme";
 import { useWs } from "@/lib/ws-context";
@@ -168,6 +169,8 @@ export default function WorkdayScreen() {
   }
 
   async function toggleGoal(goal: WorkdayGoal) {
+    if (goal.completed) haptic.selection();
+    else haptic.success();
     setWorkday((prev) => prev ? { ...prev, goals: prev.goals.map((g) => (g.id === goal.id ? { ...g, completed: !g.completed } : g)) } : null);
     await workdayApi.updateGoal(goal.id, { completed: !goal.completed }).catch(() => load());
   }

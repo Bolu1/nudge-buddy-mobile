@@ -16,6 +16,7 @@ import { tasks as tasksApi, notes as notesApi, calendar as calendarApi } from "@
 import { htmlToText } from "@/lib/notes";
 import { getPref, setPref } from "@/lib/storage";
 import { PREFS } from "@/lib/prefs";
+import { useReducedMotion } from "@/lib/motion";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { createRenderer } from "@/components/zen/gl";
 import { SpeechBubble } from "@/components/zen/SpeechBubble";
@@ -232,6 +233,7 @@ export default function ZenScreen() {
   }, []);
 
   // ── Renderer + loop ──────────────────────────────────────────────────────
+  const reduceMotion = useReducedMotion();
   const onContextCreate = useCallback((gl: ExpoWebGLRenderingContext) => {
     let renderer: THREE.WebGLRenderer;
     try {
@@ -280,7 +282,8 @@ export default function ZenScreen() {
       // Portrait screens need to pull back to fit the room
       const fit = Math.max(1, 1.45 / camera.aspect);
       // Lean in while Buddy acts out a request so the screens and notes are readable
-      push += ((director.busy ? 1 : 0) - push) * (1 - Math.exp(-dt * 1.5));
+      // (skipped with Reduce Motion: no automatic zooming)
+      push += ((director.busy && !reduceMotion ? 1 : 0) - push) * (1 - Math.exp(-dt * 1.5));
       const dist = 7.6 * fit * v.zoom * (1 - 0.38 * push);
       offset.copy(BASE_DIR).applyAxisAngle(UP, v.yaw);
       offset.y += v.pitch;
@@ -313,7 +316,7 @@ export default function ZenScreen() {
     };
     frame();
     setGlReady(true);
-  }, [bubbleX, bubbleY]);
+  }, [bubbleX, bubbleY, reduceMotion]);
 
   useEffect(() => () => {
     cancelAnimationFrame(rafRef.current);

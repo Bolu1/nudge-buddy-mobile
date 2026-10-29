@@ -81,7 +81,7 @@ export function AppLock() {
   return (
     <Modal visible animationType="fade" presentationStyle="fullScreen" statusBarTranslucent onRequestClose={() => {}}>
       <View className="flex-1 bg-bg items-center justify-center px-8 gap-6">
-        <Mascot size={96} variant="full" />
+        <Mascot size={96} variant="full" animated />
         {locked ? (
           <>
             <View className="items-center gap-1.5">

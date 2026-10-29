@@ -11,6 +11,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { PartyMascot } from "@/components/Mascot";
 import { SCORE_COLOR, scoreTone } from "@/lib/flashcards";
+import { colors } from "@/lib/theme";
 
 const CONFETTI_COLORS = ["#f7b8a5", "#b6cdb2", "#e9c46a", "#e7e1de", "#8fc78a", "#f0806f"];
 const PIECES = 24;
@@ -71,10 +72,14 @@ function ConfettiPiece({ piece }: { piece: (typeof confetti)[number] }) {
   );
 }
 
-/** Buddy in a party hat with a confetti burst, shown at the top of the session summary. */
-export function Celebration({ scorePct }: { scorePct: number }) {
+/**
+ * Buddy in a party hat with a confetti burst: the top of a flashcard session
+ * summary (pass scorePct), or any milestone (pass a title).
+ */
+export function Celebration({ scorePct, title }: { scorePct?: number; title?: string }) {
   const reduceMotion = useReducedMotion();
-  const tone = scoreTone(scorePct);
+  const tone = scorePct === undefined ? null : scoreTone(scorePct);
+  const text = title ?? (scorePct === undefined ? "" : headline(scorePct));
   const pop = useSharedValue(reduceMotion ? 1 : 0);
 
   useEffect(() => {
@@ -87,7 +92,7 @@ export function Celebration({ scorePct }: { scorePct: number }) {
   }));
 
   return (
-    <View className="items-center" accessibilityRole="text" accessibilityLabel={headline(scorePct)}>
+    <View className="items-center" accessibilityRole="text" accessibilityLabel={text}>
       <View className="items-center justify-center">
         {!reduceMotion ? (
           <View pointerEvents="none" style={{ position: "absolute", top: "50%", left: "50%" }}>
@@ -100,8 +105,8 @@ export function Celebration({ scorePct }: { scorePct: number }) {
           <PartyMascot size={112} wink={tone !== "bad"} />
         </Animated.View>
       </View>
-      <Text className="text-lg font-semibold mt-1" style={{ color: SCORE_COLOR[tone] }}>
-        {headline(scorePct)}
+      <Text className="text-lg font-semibold mt-1" style={{ color: tone ? SCORE_COLOR[tone] : colors.primary }}>
+        {text}
       </Text>
     </View>
   );

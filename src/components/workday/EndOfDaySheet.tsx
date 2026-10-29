@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import type { EndOfDayData } from "@/lib/workday";
 import { useOpenKey } from "@/lib/use-open-key";
+import { haptic } from "@/lib/haptics";
+import { Celebration } from "@/components/Celebration";
 import { Button, Checkbox, Sheet } from "@/components/ui";
 
 type EndOfDayProps = {
@@ -23,6 +25,10 @@ function EndOfDayForm({ data, onAddToTasks, onDismiss }: EndOfDayProps & { data:
   const [adding, setAdding] = useState(false);
 
   const allDone = data.unachievedGoals.length === 0;
+
+  useEffect(() => {
+    haptic.success();
+  }, []);
 
   function toggle(id: string) {
     setSelected((prev) => {
@@ -56,7 +62,8 @@ function EndOfDayForm({ data, onAddToTasks, onDismiss }: EndOfDayProps & { data:
         )
       }
     >
-      <Text className="text-outline text-sm">
+      <Celebration title={allDone ? "Every goal done!" : "That's a wrap"} />
+      <Text className="text-outline text-sm text-center">
         {data.completedGoals}/{data.totalGoals} goals completed
       </Text>
       {allDone ? (

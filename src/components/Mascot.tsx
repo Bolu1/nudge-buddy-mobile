@@ -1,4 +1,7 @@
+import { useEffect, useState } from "react";
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from "react-native-reanimated";
 import { SvgXml } from "react-native-svg";
+import { useReducedMotion } from "@/lib/motion";
 
 // Same artwork as the web app's public/mascot.svg
 const MASCOT_XML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
@@ -36,14 +39,55 @@ const MASCOT_XML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200
   <path d="M 95 106 Q 100 110 105 106" fill="none" stroke="#b6cdb2" stroke-width="3" stroke-linecap="round"/>
 </svg>`;
 
-const HEAD_XML = MASCOT_XML.replace('viewBox="0 0 200 200"', 'viewBox="34 16 132 132"');
+const toHead = (xml: string) => xml.replace('viewBox="0 0 200 200"', 'viewBox="34 16 132 132"');
+const HEAD_XML = toHead(MASCOT_XML);
+
+const HAPPY_EYES = `  <path d="M 72 96 C 72 87 84 87 84 96" fill="none" stroke="#b6cdb2" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M 116 96 C 116 87 128 87 128 96" fill="none" stroke="#b6cdb2" stroke-width="4.5" stroke-linecap="round"/>`;
+// Eyes shut for a blink
+const BLINK_EYES = `  <path d="M 72 94 L 84 94" fill="none" stroke="#b6cdb2" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M 116 94 L 128 94" fill="none" stroke="#b6cdb2" stroke-width="4.5" stroke-linecap="round"/>`;
+const BLINK_XML = MASCOT_XML.replace(HAPPY_EYES, BLINK_EYES);
+const BLINK_HEAD_XML = toHead(BLINK_XML);
+
+const FLOAT_PX = 4;
+const FLOAT_MS = 1800;
+const BLINK_EVERY_MS = 4200;
+const BLINK_MS = 140;
 
 /**
  * Nudge Buddy mascot. `full` = whole character with rings (hero spots);
- * `head` = cropped tight for logo/avatar sizes.
+ * `head` = cropped tight for logo/avatar sizes. `animated` = idle: a slow float
+ * and the odd blink, both off with Reduce Motion.
  */
-export function Mascot({ size = 32, variant = "head" }: { size?: number; variant?: "full" | "head" }) {
-  return <SvgXml xml={variant === "full" ? MASCOT_XML : HEAD_XML} width={size} height={size} />;
+export function Mascot({ size = 32, variant = "head", animated }: { size?: number; variant?: "full" | "head"; animated?: boolean }) {
+  const reduceMotion = useReducedMotion();
+  const idle = !!animated && !reduceMotion;
+  const [blinking, setBlinking] = useState(false);
+  const y = useSharedValue(0);
+
+  useEffect(() => {
+    if (!idle) return;
+    y.set(withRepeat(withSequence(
+      withTiming(-FLOAT_PX, { duration: FLOAT_MS, easing: Easing.inOut(Easing.sin) }),
+      withTiming(0, { duration: FLOAT_MS, easing: Easing.inOut(Easing.sin) }),
+    ), -1));
+    let open: ReturnType<typeof setTimeout> | undefined;
+    const id = setInterval(() => {
+      setBlinking(true);
+      open = setTimeout(() => setBlinking(false), BLINK_MS);
+    }, BLINK_EVERY_MS);
+    return () => { clearInterval(id); clearTimeout(open); y.set(0); };
+  }, [idle, y]);
+
+  const floatStyle = useAnimatedStyle(() => ({ transform: [{ translateY: y.value }] }));
+  const xml = variant === "full" ? (blinking ? BLINK_XML : MASCOT_XML) : (blinking ? BLINK_HEAD_XML : HEAD_XML);
+  if (!idle) return <SvgXml xml={xml} width={size} height={size} />;
+  return (
+    <Animated.View style={floatStyle}>
+      <SvgXml xml={xml} width={size} height={size} />
+    </Animated.View>
+  );
 }
 
 const HAPPY_FACE = `  <path d="M 72 96 C 72 87 84 87 84 96" fill="none" stroke="#b6cdb2" stroke-width="4.5" stroke-linecap="round"/>

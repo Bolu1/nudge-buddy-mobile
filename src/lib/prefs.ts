@@ -19,6 +19,8 @@ export const PREFS = {
   zenTime: "zen_time",
   // Flashcard study order — "0" = keep the saved order, otherwise shuffled
   flashcardShuffle: "nudge:flashcardShuffle",
+  // Vibration feedback on taps and completions — "0" = off
+  haptics: "nudge:haptics",
 } as const;
 
 export const PREF_KEYS = Object.values(PREFS);

@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { Alert, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import Animated, { LayoutAnimationConfig } from "react-native-reanimated";
 import { SafeAreaView } from "@/components/ui/SafeArea";
 import { tasks as tasksApi, calendar as calendarApi } from "@/lib/api";
 import { onChange } from "@/lib/events";
+import { haptic } from "@/lib/haptics";
+import { COMPLETE_SETTLE_MS, listEntering, listExiting, listLayout } from "@/lib/motion";
 import { playTaskCompleteSound } from "@/lib/sounds";
 import { PRIORITY_ORDER, formatDue, taskDue, type Task } from "@/lib/tasks";
 import { colors, priorityStyle } from "@/lib/theme";
@@ -10,6 +13,7 @@ import { useCurrentBlock } from "@/lib/use-current-block";
 import { useWorkdayBlocks } from "@/lib/use-workday-blocks";
 import { Button, Checkbox, Icon, ScreenHeader, Segmented, SectionTitle } from "@/components/ui";
 import { TaskSheet } from "@/components/tasks/TaskSheet";
+import { Celebration } from "@/components/Celebration";
 
 type CalendarState = "pending" | "done" | undefined;
 
@@ -36,6 +40,10 @@ export default function TasksScreen() {
   const [sheet, setSheet] = useState<{ open: boolean; task: Task | null }>({ open: false, task: null });
   const [calendarConnected, setCalendarConnected] = useState(false);
   const [calendarState, setCalendarState] = useState<Record<string, "pending" | "done">>({});
+  // Ticked but not yet moved to Completed, so the checkmark can animate in place
+  const [settling, setSettling] = useState<Set<string>>(new Set());
+  // Set when the last open task gets ticked off here, to celebrate instead of showing an empty card
+  const [cleared, setCleared] = useState(false);
   const { currentBlock } = useCurrentBlock();
   const { blocks, refetchWorkdayBlocks } = useWorkdayBlocks();
 
@@ -64,9 +72,19 @@ export default function TasksScreen() {
   }
 
   async function complete(id: string) {
+    if (settling.has(id)) return;
+    const lastOne = !taskList.some((t) => t.id !== id && t.status !== "COMPLETED" && !settling.has(t.id));
     playTaskCompleteSound();
-    setTaskList((prev) => prev.map((t) => (t.id === id ? { ...t, status: "COMPLETED" } : t)));
-    try { await tasksApi.complete(id); } finally { loadTasks(); refetchWorkdayBlocks(); }
+    setSettling((s) => new Set(s).add(id));
+    const request = tasksApi.complete(id);
+    // Refetch only after the move, so a fast reply can't jump ahead of the tick
+    const settled = new Promise<void>((resolve) => setTimeout(() => {
+      setSettling((s) => { const n = new Set(s); n.delete(id); return n; });
+      setTaskList((prev) => prev.map((t) => (t.id === id ? { ...t, status: "COMPLETED" } : t)));
+      if (lastOne) setCleared(true);
+      resolve();
+    }, COMPLETE_SETTLE_MS));
+    try { await Promise.all([request, settled]); } finally { loadTasks(); refetchWorkdayBlocks(); }
   }
 
   async function uncomplete(id: string) {
@@ -89,6 +107,7 @@ export default function TasksScreen() {
   }
 
   async function toggleSubtask(taskId: string, subtaskId: string) {
+    haptic.selection();
     setTaskList((prev) =>
       prev.map((t) =>
         t.id === taskId ? { ...t, subtasks: t.subtasks?.map((s) => (s.id === subtaskId ? { ...s, completed: !s.completed } : s)) } : t,
@@ -154,9 +173,16 @@ export default function TasksScreen() {
             {[1, 2, 3].map((i) => <View key={i} className="bg-surface-low border border-divider rounded-xl h-16 opacity-60" />)}
           </View>
         ) : (
-          <>
+          // Rows already there on first render appear as-is; later changes animate
+          <LayoutAnimationConfig skipEntering>
             {focusTask ? (
-              <View className="rounded-2xl bg-[#1a2b1a] border border-on-primary-container p-5">
+              <Animated.View
+                key={focusTask.id}
+                entering={listEntering}
+                exiting={listExiting}
+                layout={listLayout}
+                className="rounded-2xl bg-[#1a2b1a] border border-on-primary-container p-5"
+              >
                 <View className="flex-row items-center justify-between mb-4">
                   <View className="flex-row items-center gap-2 flex-1">
                     <View className="w-2 h-2 rounded-full bg-primary-container" />
@@ -171,7 +197,7 @@ export default function TasksScreen() {
                 </View>
                 <View className="flex-row items-start gap-4">
                   <View className="mt-1">
-                    <Checkbox checked={false} onPress={() => complete(focusTask.id)} />
+                    <Checkbox checked={settling.has(focusTask.id)} onPress={() => complete(focusTask.id)} />
                   </View>
                   <View className="flex-1">
                     <Text className="text-on-surface text-lg font-semibold leading-6">{focusTask.title}</Text>
@@ -191,28 +217,33 @@ export default function TasksScreen() {
                     ))}
                   </View>
                 ) : null}
-              </View>
+              </Animated.View>
+            ) : cleared && done.length > 0 ? (
+              <Animated.View entering={listEntering} layout={listLayout} className="rounded-2xl bg-surface-low border border-divider p-6 items-center gap-1">
+                <Celebration title="All clear!" />
+                <Text className="text-outline text-sm text-center">Every task is done. Enjoy the space.</Text>
+              </Animated.View>
             ) : (
-              <View className="rounded-2xl bg-surface-low border border-divider p-8 items-center">
+              <Animated.View entering={listEntering} layout={listLayout} className="rounded-2xl bg-surface-low border border-divider p-8 items-center">
                 <Text className="text-outline text-sm">No active tasks. Add one above.</Text>
-              </View>
+              </Animated.View>
             )}
 
             {queue.length > 0 ? (
-              <View>
+              <Animated.View entering={listEntering} exiting={listExiting} layout={listLayout}>
                 <SectionTitle>Up next</SectionTitle>
                 <View className="gap-2">
                   {queue.map((task) => {
                     const p = priorityStyle[task.priority];
                     return (
+                      <Animated.View key={task.id} entering={listEntering} exiting={listExiting} layout={listLayout}>
                       <Pressable
-                        key={task.id}
                         onPress={() => setSheet({ open: true, task })}
                         onLongPress={() => confirmDelete(task)}
                         className="bg-surface-low border border-divider rounded-xl p-4 active:border-outline-variant"
                       >
                         <View className="flex-row items-center gap-3">
-                          <Checkbox checked={false} size={18} onPress={() => complete(task.id)} />
+                          <Checkbox checked={settling.has(task.id)} size={18} onPress={() => complete(task.id)} />
                           <Text className="flex-1 text-on-surface-variant text-sm leading-5">{task.title}</Text>
                           <View className="px-2 py-0.5 rounded-full border" style={{ backgroundColor: p.bg, borderColor: p.border }}>
                             <Text className="text-[11px]" style={{ color: p.text }}>{task.priority.toLowerCase()}</Text>
@@ -225,18 +256,25 @@ export default function TasksScreen() {
                           </View>
                         ) : null}
                       </Pressable>
+                      </Animated.View>
                     );
                   })}
                 </View>
-              </View>
+              </Animated.View>
             ) : null}
 
             {done.length > 0 ? (
-              <View>
+              <Animated.View entering={listEntering} exiting={listExiting} layout={listLayout}>
                 <SectionTitle>Completed</SectionTitle>
                 <View className="gap-2">
                   {done.map((task) => (
-                    <View key={task.id} className="bg-surface-low/50 border border-surface-high/50 rounded-xl p-4 flex-row items-center gap-3">
+                    <Animated.View
+                      key={task.id}
+                      entering={listEntering}
+                      exiting={listExiting}
+                      layout={listLayout}
+                      className="bg-surface-low/50 border border-surface-high/50 rounded-xl p-4 flex-row items-center gap-3"
+                    >
                       <Pressable
                         onPress={() => uncomplete(task.id)}
                         hitSlop={8}
@@ -249,23 +287,23 @@ export default function TasksScreen() {
                       <Pressable onPress={() => confirmDelete(task)} hitSlop={8} accessibilityLabel="Delete task">
                         <Icon name="trash" size={15} color={colors.outline} />
                       </Pressable>
-                    </View>
+                    </Animated.View>
                   ))}
                 </View>
-              </View>
+              </Animated.View>
             ) : null}
 
-            <View className="bg-surface-low border border-divider rounded-2xl p-5">
+            <Animated.View layout={listLayout} className="bg-surface-low border border-divider rounded-2xl p-5">
               <SectionTitle>Today</SectionTitle>
               <View className="flex-row items-center justify-between mb-2">
                 <Text className="text-on-surface-variant text-sm">Completed</Text>
                 <Text className="text-primary text-sm font-medium">{done.length}/{taskList.length}</Text>
               </View>
               <View className="w-full bg-surface-high rounded-full h-1.5">
-                <View className="bg-primary-container h-1.5 rounded-full" style={{ width: taskList.length ? `${(done.length / taskList.length) * 100}%` : "0%" }} />
+                <Animated.View layout={listLayout} className="bg-primary-container h-1.5 rounded-full" style={{ width: taskList.length ? `${(done.length / taskList.length) * 100}%` : "0%" }} />
               </View>
-            </View>
-          </>
+            </Animated.View>
+          </LayoutAnimationConfig>
         )}
       </ScrollView>
 

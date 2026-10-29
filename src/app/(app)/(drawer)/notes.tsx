@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, KeyboardAvoidingView, Modal, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "@/components/ui/SafeArea";
+import { LayoutAnimationConfig } from "react-native-reanimated";
 import { notes as notesApi } from "@/lib/api";
 import { onChange } from "@/lib/events";
 import { htmlToText, splitNotePreview } from "@/lib/notes";
 import { colors } from "@/lib/theme";
-import { Button, Icon, IconButton, ScreenHeader } from "@/components/ui";
+import { Button, Icon, IconButton, ListItem, ScreenHeader } from "@/components/ui";
 import { RichTextEditor } from "@/components/notes/RichTextEditor";
+import { Mascot } from "@/components/Mascot";
 
 interface Note {
   id: string;
@@ -157,13 +159,17 @@ export default function NotesScreen() {
         {loading ? (
           [1, 2, 3].map((i) => <View key={i} className="h-16 mx-1 mb-2 bg-surface-low border border-divider rounded-xl" />)
         ) : sorted.length === 0 ? (
-          <Text className="text-outline text-sm px-3 py-4">No notes yet. Tap New to write one, or ask your buddy to take a note.</Text>
+          <View className="items-center px-6 py-12 gap-3">
+            <Mascot size={56} animated />
+            <Text className="text-outline text-sm text-center">No notes yet. Tap New to write one, or ask your buddy to take a note.</Text>
+          </View>
         ) : (
-          sorted.map((note) => {
+          <LayoutAnimationConfig skipEntering>
+          {sorted.map((note) => {
             const preview = splitNotePreview(note.content);
             return (
+              <ListItem key={note.id}>
               <Pressable
-                key={note.id}
                 onPress={() => { setSaveStatus("idle"); setSession((n) => n + 1); setOpenId(note.id); }}
                 onLongPress={() => deleteNote(note.id)}
                 className="px-3 py-3 rounded-xl active:bg-surface"
@@ -172,8 +178,10 @@ export default function NotesScreen() {
                 {preview.body ? <Text className="text-outline text-xs mt-0.5 leading-5" numberOfLines={2}>{preview.body}</Text> : null}
                 <Text className="text-outline text-[11px] mt-1.5">{relativeTime(note.createdAt)}</Text>
               </Pressable>
+              </ListItem>
             );
-          })
+          })}
+          </LayoutAnimationConfig>
         )}
       </ScrollView>
 

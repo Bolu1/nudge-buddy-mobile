@@ -15,10 +15,23 @@ import {
   type TextInputProps,
 } from "react-native";
 import { Gesture, GestureDetector, GestureHandlerRootView } from "react-native-gesture-handler";
-import Animated, { Easing, Extrapolation, interpolate, useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
+import Animated, {
+  Easing,
+  Extrapolation,
+  interpolate,
+  interpolateColor,
+  useAnimatedProps,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
+import Svg, { Path } from "react-native-svg";
 import { scheduleOnRN } from "react-native-worklets";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/lib/theme";
+import { haptic } from "@/lib/haptics";
+import { EASE_OUT, listEntering, listExiting, listLayout, MOTION, SPRING_SNAPPY } from "@/lib/motion";
 import { Icon, type IconName } from "./Icon";
 import { MenuButton } from "./MenuButton";
 
@@ -190,46 +203,142 @@ export function Segmented<T extends string>({
   onChange: (v: T) => void;
   className?: string;
 }) {
+  // The highlight slides to the chosen option instead of jumping
+  const [frames, setFrames] = useState<Record<string, { x: number; width: number }>>({});
+  const frame = frames[value];
+  const x = useSharedValue(0);
+  const w = useSharedValue(0);
+  const placed = useRef(false);
+  useEffect(() => {
+    if (!frame) return;
+    if (!placed.current) {
+      placed.current = true;
+      x.set(frame.x);
+      w.set(frame.width);
+      return;
+    }
+    x.set(withTiming(frame.x, { duration: MOTION.base, easing: EASE_OUT }));
+    w.set(withTiming(frame.width, { duration: MOTION.base, easing: EASE_OUT }));
+  }, [frame, x, w]);
+  const pillStyle = useAnimatedStyle(() => ({ width: w.value, transform: [{ translateX: x.value }] }));
+
   return (
-    <View className={`flex-row items-center gap-0.5 bg-field border border-divider rounded-full p-0.5 ${className}`}>
-      {options.map((o) => {
-        const active = o.value === value;
-        return (
-          <Pressable
-            key={o.value}
-            onPress={() => onChange(o.value)}
-            disabled={o.disabled}
-            className={`px-3 py-1.5 rounded-full ${active ? "bg-surface-high" : ""} ${o.disabled ? "opacity-40" : ""}`}
-          >
-            <Text className={`text-xs font-medium ${active ? "text-on-surface" : "text-outline"}`}>{o.label}</Text>
-          </Pressable>
-        );
-      })}
+    <View className={`bg-field border border-divider rounded-full p-0.5 ${className}`}>
+      {/* Plain inner row: the pill and the options' measured frames share its origin */}
+      <View className="flex-row items-center gap-0.5" accessibilityRole="tablist">
+        {frame ? <Animated.View pointerEvents="none" className="absolute top-0 bottom-0 left-0 rounded-full bg-surface-high" style={pillStyle} /> : null}
+        {options.map((o) => {
+          const active = o.value === value;
+          return (
+            <Pressable
+              key={o.value}
+              onPress={() => {
+                if (active) return;
+                haptic.selection();
+                onChange(o.value);
+              }}
+              onLayout={(e) => {
+                const { x: ox, width } = e.nativeEvent.layout;
+                setFrames((f) => (f[o.value]?.x === ox && f[o.value]?.width === width ? f : { ...f, [o.value]: { x: ox, width } }));
+              }}
+              disabled={o.disabled}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: active, disabled: !!o.disabled }}
+              className={`px-3 py-1.5 rounded-full ${active && !frame ? "bg-surface-high" : ""} ${o.disabled ? "opacity-40" : ""}`}
+            >
+              <Text className={`text-xs font-medium ${active ? "text-on-surface" : "text-outline"}`}>{o.label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
     </View>
   );
 }
 
-export function Checkbox({ checked, onPress, size = 20 }: { checked: boolean; onPress?: () => void; size?: number }) {
+const AnimatedPath = Animated.createAnimatedComponent(Path);
+// Length of the tick path below, so the stroke can draw itself in
+const TICK_LENGTH = 23;
+
+export function Checkbox({
+  checked,
+  onPress,
+  size = 20,
+  dimmed,
+  accessibilityLabel,
+}: {
+  checked: boolean;
+  onPress?: () => void;
+  size?: number;
+  /** Looks unavailable but still takes the tap, e.g. to explain why */
+  dimmed?: boolean;
+  accessibilityLabel?: string;
+}) {
+  // Fills with a small pop and the tick draws from left to right
+  const p = useSharedValue(checked ? 1 : 0);
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) { first.current = false; return; }
+    p.set(checked ? withSpring(1, SPRING_SNAPPY) : withTiming(0, { duration: MOTION.fast }));
+  }, [checked, p]);
+  const boxStyle = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(p.value, [0, 1], ["rgba(141,163,138,0)", colors.primaryContainer]),
+    borderColor: interpolateColor(p.value, [0, 1], [colors.outline, colors.primaryContainer]),
+    transform: [{ scale: interpolate(p.value, [0, 0.5, 1], [1, 1.15, 1], Extrapolation.CLAMP) }],
+  }));
+  const tickProps = useAnimatedProps(() => ({
+    strokeDashoffset: TICK_LENGTH * (1 - Math.min(Math.max(p.value, 0), 1)),
+  }));
+  const tick = size * 0.6;
   return (
     <Pressable
       onPress={onPress}
       hitSlop={8}
-      style={{ width: size, height: size }}
-      className={`rounded-full border-2 items-center justify-center ${checked ? "bg-primary-container border-primary-container" : "border-outline-variant"}`}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked }}
+      accessibilityLabel={accessibilityLabel}
+      className={dimmed ? "opacity-30" : ""}
     >
-      {checked ? <Icon name="check" size={size * 0.6} color={colors.onPrimary} strokeWidth={3} /> : null}
+      <Animated.View style={[{ width: size, height: size }, boxStyle]} className="rounded-full border-2 items-center justify-center">
+        <Svg width={tick} height={tick} viewBox="0 0 24 24" fill="none">
+          <AnimatedPath
+            d="M4 12l5 5L20 6"
+            stroke={colors.onPrimary}
+            strokeWidth={3}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeDasharray={TICK_LENGTH}
+            animatedProps={tickProps}
+          />
+        </Svg>
+      </Animated.View>
     </Pressable>
   );
 }
 
 export function Toggle({ value, onChange, disabled }: { value: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
+  // The thumb slides across and the track colour blends, like the system switch
+  const p = useSharedValue(value ? 1 : 0);
+  useEffect(() => {
+    p.set(withTiming(value ? 1 : 0, { duration: MOTION.fast, easing: EASE_OUT }));
+  }, [value, p]);
+  const trackStyle = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(p.value, [0, 1], [colors.surfaceHighest, colors.primaryContainer]),
+  }));
+  const thumbStyle = useAnimatedStyle(() => ({ transform: [{ translateX: p.value * 20 }] }));
   return (
     <Pressable
-      onPress={() => onChange(!value)}
+      onPress={() => {
+        haptic.selection();
+        onChange(!value);
+      }}
       disabled={disabled}
-      className={`w-11 h-6 rounded-full p-0.5 ${value ? "bg-primary-container" : "bg-surface-highest"} ${disabled ? "opacity-40" : ""}`}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: value, disabled: !!disabled }}
+      className={disabled ? "opacity-40" : ""}
     >
-      <View className={`w-5 h-5 rounded-full bg-on-surface ${value ? "ml-5" : ""}`} />
+      <Animated.View className="w-11 h-6 rounded-full p-0.5" style={trackStyle}>
+        <Animated.View className="w-5 h-5 rounded-full bg-on-surface" style={thumbStyle} />
+      </Animated.View>
     </Pressable>
   );
 }
@@ -277,6 +386,19 @@ export function Spinner({ className = "" }: { className?: string }) {
     <View className={`items-center justify-center py-10 ${className}`}>
       <ActivityIndicator color={colors.primaryContainer} />
     </View>
+  );
+}
+
+/**
+ * A list row that fades in when added, fades out when removed, and glides when
+ * its neighbours change. Wrap the list in <LayoutAnimationConfig skipEntering>
+ * so rows already there on first render don't all fade in.
+ */
+export function ListItem({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <Animated.View entering={listEntering} exiting={listExiting} layout={listLayout} className={className}>
+      {children}
+    </Animated.View>
   );
 }
 

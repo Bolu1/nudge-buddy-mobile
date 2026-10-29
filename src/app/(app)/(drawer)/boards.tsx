@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "@/components/ui/SafeArea";
+import { LayoutAnimationConfig } from "react-native-reanimated";
 import { router } from "expo-router";
 import { boards as boardsApi } from "@/lib/api";
 import { ROLE_LABEL, unwrap, type BoardSummary } from "@/lib/boards";
@@ -8,9 +9,10 @@ import { onChange } from "@/lib/events";
 import { colors } from "@/lib/theme";
 import { useWs } from "@/lib/ws-context";
 import { Avatar } from "@/components/Avatar";
+import { Mascot } from "@/components/Mascot";
 import { BoardFormSheet } from "@/components/boards/BoardFormSheet";
 import { InvitesList } from "@/components/boards/InvitesList";
-import { Button, ScreenHeader, SectionTitle } from "@/components/ui";
+import { Button, ListItem, ScreenHeader, SectionTitle } from "@/components/ui";
 
 const MAX_AVATARS = 5;
 
@@ -72,14 +74,16 @@ export default function BoardsScreen() {
             <View className="gap-3">{[1, 2].map((i) => <View key={i} className="h-28 bg-surface-low border border-divider rounded-2xl" />)}</View>
           ) : list.length === 0 ? (
             <View className="rounded-2xl bg-surface-low border border-divider p-8 items-center">
+              <View className="mb-3"><Mascot size={56} animated /></View>
               <Text className="text-on-surface-variant text-sm font-medium">No boards yet</Text>
               <Text className="text-outline text-sm mt-1 text-center">Create one and invite people by email to share tasks.</Text>
             </View>
           ) : (
             <View className="gap-3">
+              <LayoutAnimationConfig skipEntering>
               {list.map((b) => (
+                <ListItem key={b.id}>
                 <Pressable
-                  key={b.id}
                   onPress={() => router.push({ pathname: "/boards/[boardId]", params: { boardId: b.id } })}
                   className="bg-surface-low border border-divider active:border-outline-variant rounded-2xl p-4 gap-3"
                 >
@@ -94,7 +98,9 @@ export default function BoardsScreen() {
                     <Text className="text-outline text-xs">{b.openTaskCount} open</Text>
                   </View>
                 </Pressable>
+                </ListItem>
               ))}
+              </LayoutAnimationConfig>
             </View>
           )}
         </View>

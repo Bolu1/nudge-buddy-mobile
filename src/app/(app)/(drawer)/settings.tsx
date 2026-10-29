@@ -90,6 +90,7 @@ export default function SettingsScreen() {
   const [calendarConnected, setCalendarConnected] = useState(false);
   const [calendarBusy, setCalendarBusy] = useState(false);
   const [callsEnabled, setCallsEnabled] = useState(() => getPref(PREFS.callsEnabled) !== "0");
+  const [hapticsOn, setHapticsOn] = useState(() => getPref(PREFS.haptics) !== "0");
   const [appLock, setAppLockState] = useState(appLockEnabled);
   // undefined while checking; null when the phone has no biometrics set up
   const [lockLabel, setLockLabel] = useState<string | null | undefined>(undefined);
@@ -158,6 +159,11 @@ export default function SettingsScreen() {
     setCallsEnabled(on);
     setPref(PREFS.callsEnabled, on ? "1" : "0");
     void registerForPush();
+  }
+
+  function toggleHaptics(on: boolean) {
+    setHapticsOn(on);
+    setPref(PREFS.haptics, on ? "1" : "0");
   }
 
   async function connectCalendar() {
@@ -276,6 +282,14 @@ export default function SettingsScreen() {
                 : `Require ${lockLabel ?? "biometrics"} to open Nudge Buddy. Your phone's passcode works as a backup.`
             }
             right={<Toggle value={appLock} onChange={(v) => void toggleAppLock(v)} disabled={lockLabel === null && !appLock} />}
+          />
+        </Section>
+
+        <Section title="Feedback">
+          <Row
+            title="Haptics"
+            sub="Gentle vibrations when you tick things off, switch options or finish a session."
+            right={<Toggle value={hapticsOn} onChange={toggleHaptics} />}
           />
         </Section>
 

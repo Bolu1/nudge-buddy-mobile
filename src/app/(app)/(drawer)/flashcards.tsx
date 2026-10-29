@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "@/components/ui/SafeArea";
+import { LayoutAnimationConfig } from "react-native-reanimated";
 import { router } from "expo-router";
 import { flashcards as flashcardsApi } from "@/lib/api";
 import { unwrap } from "@/lib/boards";
@@ -9,7 +10,8 @@ import { SCORE_COLOR, scoreTone, type CollectionSummary } from "@/lib/flashcards
 import { colors } from "@/lib/theme";
 import { CollectionFormSheet } from "@/components/flashcards/CollectionFormSheet";
 import { ThemeBackground } from "@/components/flashcards/ThemeBackground";
-import { Button, ScreenHeader, SectionTitle } from "@/components/ui";
+import { Mascot } from "@/components/Mascot";
+import { Button, ListItem, ScreenHeader, SectionTitle } from "@/components/ui";
 
 function openCollection(id: string) {
   router.push({ pathname: "/flashcards/[collectionId]", params: { collectionId: id } });
@@ -48,14 +50,16 @@ export default function FlashcardsScreen() {
           <View className="gap-3">{[1, 2].map((i) => <View key={i} className="h-40 bg-surface-low border border-divider rounded-2xl" />)}</View>
         ) : list.length === 0 ? (
           <View className="rounded-2xl bg-surface-low border border-divider p-8 items-center">
+            <View className="mb-3"><Mascot size={56} animated /></View>
             <Text className="text-on-surface-variant text-sm font-medium">No collections yet</Text>
             <Text className="text-outline text-sm mt-1 text-center">Create one, add up to 50 cards, then test yourself.</Text>
           </View>
         ) : (
           <View className="gap-3">
+            <LayoutAnimationConfig skipEntering>
             {list.map((c) => (
+              <ListItem key={c.id}>
               <Pressable
-                key={c.id}
                 onPress={() => openCollection(c.id)}
                 className="bg-surface-low border border-divider active:border-outline-variant rounded-2xl overflow-hidden"
               >
@@ -78,7 +82,9 @@ export default function FlashcardsScreen() {
                   </View>
                 </View>
               </Pressable>
+              </ListItem>
             ))}
+            </LayoutAnimationConfig>
           </View>
         )}
       </ScrollView>

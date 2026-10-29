@@ -1,7 +1,9 @@
-import type { ComponentProps } from "react";
+import { useEffect, useRef, type ComponentProps } from "react";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { router } from "expo-router";
 import { Drawer } from "expo-router/drawer";
+import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming, ZoomIn } from "react-native-reanimated";
+import { EASE_OUT, MOTION, SPRING_SNAPPY } from "@/lib/motion";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/lib/auth-context";
 import { colors } from "@/lib/theme";
@@ -54,12 +56,26 @@ function Row({
       <Icon name={icon} size={19} color={color} strokeWidth={active ? 2 : 1.75} />
       <Text className="text-[15px] font-medium flex-1" style={{ color }}>{title}</Text>
       {hint ? <Text className="text-primary-container text-xs">{hint}</Text> : null}
-      {badge ? (
-        <View className="min-w-5 h-5 px-1.5 rounded-full bg-secondary items-center justify-center">
-          <Text className="text-on-secondary text-[11px] font-bold">{badge}</Text>
-        </View>
-      ) : null}
+      {badge ? <Badge count={badge} /> : null}
     </Pressable>
+  );
+}
+
+/** Zooms in when it first appears and gives a small pop each time the count goes up */
+function Badge({ count }: { count: number }) {
+  const scale = useSharedValue(1);
+  const last = useRef(count);
+  useEffect(() => {
+    if (count > last.current) {
+      scale.set(withSequence(withTiming(1.3, { duration: MOTION.fast, easing: EASE_OUT }), withSpring(1, SPRING_SNAPPY)));
+    }
+    last.current = count;
+  }, [count, scale]);
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  return (
+    <Animated.View entering={ZoomIn.springify()} style={style} className="min-w-5 h-5 px-1.5 rounded-full bg-secondary items-center justify-center">
+      <Text className="text-on-secondary text-[11px] font-bold">{count}</Text>
+    </Animated.View>
   );
 }
 
