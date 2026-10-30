@@ -91,6 +91,8 @@ export const ACTION_LABELS: Record<string, string> = {
   subtask_not_found: "Not found",
   note_created: "Note saved",
   notes_listed: "Notes",
+  note_summarized: "Note",
+  note_not_found: "Not found",
   pomodoro_started: "Timer started",
   pomodoro_cancelled: "Timer cancelled",
   pomodoro_status: "Timer status",

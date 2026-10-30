@@ -156,6 +156,15 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
         if (speech && micActiveRef.current && !stale) speak(speech);
         return;
       }
+      // "Delete X? This can't be undone." — the user answers yes/no on the next turn
+      if (msg.type === "confirm_required") {
+        const stale = settleReply();
+        if (speech) {
+          pushMessage("assistant", speech, msg.action as string | undefined);
+          if (micActiveRef.current && !stale) speak(speech);
+        }
+        return;
+      }
       if (CONVERSATIONAL_TYPES.has(msg.type)) return;
 
       // Server pushes: reminders, pomodoro, workday, quota… Log them and speak
